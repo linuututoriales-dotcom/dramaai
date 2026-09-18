@@ -2,7 +2,7 @@
 <html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Netflix - Dramas 9:16</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
-                        netflix: { red: '#E50914', dark: '#141414', card: '#1f1f1f' }
+                        netflix: { red: '#E50914', dark: '#141414', card: '#1f1f1f', hover: '#2f2f2f' }
                     }
                 }
             }
@@ -25,274 +25,305 @@
             font-family: 'Inter', sans-serif;
             background-color: #141414;
             color: #ffffff;
-            overscroll-behavior-y: none;
+            overflow-x: hidden;
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         video::-webkit-media-controls { display: none !important; }
     </style>
 </head>
-<body class="h-full overflow-hidden flex flex-col justify-between select-none">
+<body class="h-full flex flex-col bg-netflix-dark select-none">
 
-    <!-- APP CONTAINER (Mobile Frame optimized) -->
-    <div id="app" class="relative w-full h-full max-w-md mx-auto bg-netflix-dark flex flex-col shadow-2xl overflow-hidden sm:border-x sm:border-zinc-800">
-
-        <!-- TOP NAVIGATION / HEADER -->
-        <header id="mainHeader" class="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/90 via-black/50 to-transparent">
-            <div class="flex items-center space-x-2">
-                <span class="text-netflix-red font-extrabold text-xl tracking-tighter">N</span>
-                <span class="text-xs font-semibold tracking-wider uppercase text-zinc-300">AI Dramas</span>
+    <!-- DESKTOP SIDEBAR & MOBILE TOPBAR NAVIGATION -->
+    <header id="mainHeader" class="fixed top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/90 via-black/60 to-transparent backdrop-blur-sm px-6 py-4 flex items-center justify-between transition-all duration-300">
+        <div class="flex items-center space-x-8">
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="appController.switchTab('home')">
+                <span class="text-netflix-red font-black text-2xl tracking-tighter">N</span>
+                <span class="text-xs font-bold tracking-widest uppercase text-zinc-300 hidden sm:inline">AI Dramas Hub</span>
             </div>
-            <div class="flex items-center space-x-3">
-                <button onclick="appController.openSearch()" class="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition">
-                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
-                </button>
-                <button onclick="appController.openAdminAuthModal()" class="w-9 h-9 rounded-full bg-netflix-red/80 hover:bg-netflix-red text-white flex items-center justify-center transition shadow-lg">
-                    <i class="fa-solid fa-user-shield text-xs"></i>
-                </button>
-            </div>
-        </header>
-
-        <!-- MAIN VIEWS CONTAINER -->
-        <div id="viewsContainer" class="relative w-full h-full overflow-y-auto no-scrollbar pb-24 pt-14">
-            
-            <!-- VIEW: CATALOG / NETFLIX HOME -->
-            <div id="homeView" class="space-y-6">
-                <!-- HERO FEATURED BANNER -->
-                <div id="heroBanner" class="relative w-full h-[420px] bg-zinc-900 overflow-hidden flex flex-col justify-end p-5">
-                    <!-- Dynamic Hero background/video -->
-                    <div id="heroMediaContainer" class="absolute inset-0 z-0">
-                        <img id="heroCover" src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop" class="w-full h-full object-cover opacity-80" alt="Hero">
-                        <div class="absolute inset-0 bg-gradient-to-t from-netflix-dark via-netflix-dark/40 to-transparent"></div>
-                    </div>
-                    
-                    <div class="relative z-10 space-y-2">
-                        <div class="flex items-center space-x-2">
-                            <span class="px-2 py-0.5 bg-netflix-red text-white font-bold text-[10px] rounded uppercase">Estreno IA</span>
-                            <span class="text-xs text-zinc-300 font-medium" id="heroCategory">Ciencia Ficción</span>
-                        </div>
-                        <h1 id="heroTitle" class="text-2xl font-black tracking-tight text-white drop-shadow-lg">Cargando destacados...</h1>
-                        <p id="heroDesc" class="text-xs text-zinc-300 line-clamp-2 drop-shadow">Explora los mejores dramas generados por inteligencia artificial en formato vertical 9:16.</p>
-                        
-                        <div class="flex items-center space-x-3 pt-2">
-                            <button id="heroPlayBtn" class="flex-1 bg-white hover:bg-zinc-200 text-black font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-2 transition shadow-lg active:scale-95">
-                                <i class="fa-solid fa-play text-black"></i>
-                                <span>Reproducir</span>
-                            </button>
-                            <button id="heroInfoBtn" class="flex-1 bg-zinc-800/80 hover:bg-zinc-700 backdrop-blur-md text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-2 transition shadow-lg active:scale-95">
-                                <i class="fa-solid fa-circle-info"></i>
-                                <span>Más info</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- CATEGORIES CHIPS -->
-                <div class="px-4 flex items-center space-x-2 overflow-x-auto no-scrollbar">
-                    <button onclick="appController.filterCategory('all')" class="category-chip px-3.5 py-1.5 rounded-full bg-white text-black text-xs font-semibold whitespace-nowrap transition">Todos</button>
-                    <button onclick="appController.filterCategory('Romance')" class="category-chip px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-300 text-xs font-semibold whitespace-nowrap transition">Romance IA</button>
-                    <button onclick="appController.filterCategory('Sci-Fi')" class="category-chip px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-300 text-xs font-semibold whitespace-nowrap transition">Ciencia Ficción</button>
-                    <button onclick="appController.filterCategory('Suspense')" class="category-chip px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-300 text-xs font-semibold whitespace-nowrap transition">Suspense</button>
-                    <button onclick="appController.filterCategory('Fantasía')" class="category-chip px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-300 text-xs font-semibold whitespace-nowrap transition">Fantasía</button>
-                </div>
-
-                <!-- CATALOG SECTION 1: TENDENCIAS -->
-                <div class="space-y-3 px-4">
-                    <h2 class="font-bold text-sm text-zinc-200 flex items-center space-x-2">
-                        <span class="w-1 h-3.5 bg-netflix-red rounded-full"></span>
-                        <span>Tendencias en Dramas 9:16</span>
-                    </h2>
-                    <div id="catalogGrid" class="grid grid-cols-3 gap-2.5">
-                        <!-- Dynamic items injected here -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- VIEW: SEARCH RESULTS -->
-            <div id="searchView" class="hidden px-4 space-y-4">
-                <div class="relative mt-2">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-zinc-400 text-xs"></i>
-                    <input type="text" id="searchInput" oninput="appController.handleSearch(this.value)" placeholder="Buscar por título, género o sinopsis..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-netflix-red transition">
-                </div>
-                <div id="searchResultsGrid" class="grid grid-cols-3 gap-2.5">
-                    <!-- Search results injected here -->
-                </div>
-            </div>
-
-            <!-- VIEW: FAVORITES -->
-            <div id="favoritesView" class="hidden px-4 space-y-3">
-                <h2 class="font-bold text-sm text-zinc-200 mb-2">Mi Lista de Dramas</h2>
-                <div id="favoritesGrid" class="grid grid-cols-3 gap-2.5">
-                    <!-- Favorites injected here -->
-                </div>
-            </div>
-
+            <!-- Desktop Nav Links -->
+            <nav class="hidden md:flex items-center space-x-6 text-xs font-medium text-zinc-300">
+                <button onclick="appController.switchTab('home')" class="hover:text-white transition text-white" id="desktopNavHome">Inicio</button>
+                <button onclick="appController.switchTab('search')" class="hover:text-white transition" id="desktopNavSearch">Buscar</button>
+                <button onclick="appController.switchTab('favorites')" class="hover:text-white transition" id="desktopNavFav">Mi Lista</button>
+            </nav>
         </div>
 
-        <!-- BOTTOM NETFLIX NAVIGATION BAR -->
-        <nav class="absolute bottom-0 left-0 right-0 z-30 bg-netflix-dark/95 backdrop-blur-md border-t border-zinc-800/80 py-2.5 px-6 flex justify-around items-center text-zinc-400">
-            <button onclick="appController.switchTab('home')" class="flex flex-col items-center space-y-1 text-white transition" id="navHome">
-                <i class="fa-solid fa-house text-base"></i>
-                <span class="text-[9px] font-medium">Inicio</span>
+        <div class="flex items-center space-x-4">
+            <!-- Search Icon / Input toggle -->
+            <button onclick="appController.switchTab('search')" class="w-9 h-9 rounded-full bg-black/40 hover:bg-white/20 flex items-center justify-center text-white transition">
+                <i class="fa-solid fa-magnifying-glass text-xs"></i>
             </button>
-            <button onclick="appController.switchTab('search')" class="flex flex-col items-center space-y-1 hover:text-white transition" id="navSearch">
-                <i class="fa-solid fa-magnifying-glass text-base"></i>
-                <span class="text-[9px] font-medium">Buscar</span>
+            <!-- Admin Button -->
+            <button onclick="appController.openAdminModal()" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-netflix-red/90 hover:bg-netflix-red text-white text-xs font-bold transition shadow-md">
+                <i class="fa-solid fa-user-shield text-xs"></i>
+                <span class="hidden sm:inline" id="adminBtnLabel">Admin</span>
             </button>
-            <button onclick="appController.switchTab('favorites')" class="flex flex-col items-center space-y-1 hover:text-white transition" id="navFav">
-                <i class="fa-solid fa-heart text-base"></i>
-                <span class="text-[9px] font-medium">Mi Lista</span>
-            </button>
-        </nav>
+        </div>
+    </header>
 
-        <!-- 9:16 VERTICAL STREAMING PLAYER MODAL -->
-        <div id="playerModal" class="absolute inset-0 z-50 bg-black flex flex-col justify-between transform translate-y-full transition-transform duration-300 ease-out overflow-hidden">
-            <!-- Top Player Bar -->
-            <div class="absolute top-0 inset-x-0 z-30 flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent">
-                <button onclick="appController.closePlayer()" class="w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-white/20 transition">
+    <!-- MAIN APP WRAPPER -->
+    <main class="flex-1 w-full relative pt-16 pb-20 md:pb-6 overflow-y-auto no-scrollbar">
+
+        <!-- VIEW: HOME / CATALOG -->
+        <div id="homeView" class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 py-4">
+            
+            <!-- HERO BANNER -->
+            <div id="heroBanner" class="relative w-full h-[450px] sm:h-[500px] rounded-3xl overflow-hidden shadow-2xl bg-zinc-900 flex flex-col justify-end p-6 sm:p-10">
+                <div class="absolute inset-0 z-0">
+                    <img id="heroCover" src="" class="w-full h-full object-cover opacity-75 transform hover:scale-105 transition duration-1000" alt="Hero Banner">
+                    <div class="absolute inset-0 bg-gradient-to-t from-netflix-dark via-netflix-dark/40 to-transparent"></div>
+                </div>
+
+                <div class="relative z-10 max-w-xl space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="px-2.5 py-1 bg-netflix-red text-white font-bold text-[10px] rounded-md uppercase tracking-wider">Estreno IA</span>
+                        <span id="heroCategory" class="text-xs font-semibold text-zinc-300 uppercase tracking-widest">Ciencia Ficción</span>
+                    </div>
+                    <h1 id="heroTitle" class="text-3xl sm:text-5xl font-black text-white tracking-tight drop-shadow-lg">Cargando...</h1>
+                    <p id="heroDesc" class="text-xs sm:text-sm text-zinc-300 line-clamp-3 leading-relaxed drop-shadow">Explora los dramas generados por inteligencia artificial en formato vertical 9:16.</p>
+                    
+                    <div class="flex items-center space-x-3 pt-3">
+                        <button id="heroPlayBtn" class="bg-white hover:bg-zinc-200 text-black font-bold px-6 py-3 rounded-xl text-xs sm:text-sm flex items-center space-x-2 transition shadow-lg active:scale-95">
+                            <i class="fa-solid fa-play text-black"></i>
+                            <span>Reproducir</span>
+                        </button>
+                        <button id="heroFavBtn" class="bg-zinc-800/80 hover:bg-zinc-700 backdrop-blur-md text-white font-bold px-5 py-3 rounded-xl text-xs sm:text-sm flex items-center space-x-2 transition shadow-lg active:scale-95">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Mi Lista</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CATEGORY CHIPS -->
+            <div class="flex items-center space-x-3 overflow-x-auto no-scrollbar py-1">
+                <button onclick="appController.filterCategory('all')" class="category-chip px-4 py-2 rounded-full bg-white text-black text-xs font-bold whitespace-nowrap transition shadow">Todos</button>
+                <button onclick="appController.filterCategory('Sci-Fi')" class="category-chip px-4 py-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold whitespace-nowrap transition">Ciencia Ficción</button>
+                <button onclick="appController.filterCategory('Romance')" class="category-chip px-4 py-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold whitespace-nowrap transition">Romance IA</button>
+                <button onclick="appController.filterCategory('Suspense')" class="category-chip px-4 py-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold whitespace-nowrap transition">Suspense</button>
+                <button onclick="appController.filterCategory('Fantasía')" class="category-chip px-4 py-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold whitespace-nowrap transition">Fantasía</button>
+            </div>
+
+            <!-- CATALOG GRID (RESPONSIVE 2 TO 5 COLUMNS) -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-base sm:text-lg font-bold text-white flex items-center space-x-2">
+                        <span class="w-1.5 h-4 bg-netflix-red rounded-full"></span>
+                        <span id="catalogSectionTitle">Dramas Destacados 9:16</span>
+                    </h2>
+                </div>
+                <div id="catalogGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: SEARCH -->
+        <div id="searchView" class="hidden w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+            <div class="flex items-center space-x-4">
+                <button onclick="appController.switchTab('home')" class="w-10 h-10 rounded-full bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center transition shadow">
                     <i class="fa-solid fa-arrow-left"></i>
                 </button>
-                <div class="text-center">
-                    <h3 id="playerModalTitle" class="text-xs font-bold text-white truncate max-w-[200px]">Título del Drama</h3>
-                    <span class="text-[10px] text-zinc-400">Formato 9:16 HD</span>
-                </div>
-                <button onclick="appController.togglePlayerFavorite()" id="playerFavBtn" class="w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-white/20 transition">
-                    <i class="fa-regular fa-heart text-xs"></i>
-                </button>
-            </div>
-
-            <!-- Video 9:16 Element -->
-            <div class="relative w-full h-full flex items-center justify-center bg-black">
-                <video id="streamVideo" class="w-full h-full object-cover" loop playsinline webkit-playsinline onclick="appController.togglePlayPause()"></video>
-                <div id="playerPlayOverlay" class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 transition-opacity">
-                    <div class="w-16 h-16 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center text-xl">
-                        <i class="fa-solid fa-play"></i>
-                    </div>
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-zinc-400 text-sm"></i>
+                    <input type="text" id="searchInput" oninput="appController.handleSearch(this.value)" placeholder="Buscar por título, género o sinopsis..." class="w-full bg-zinc-900 border border-zinc-800 rounded-2xl pl-11 pr-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-netflix-red transition shadow-inner">
                 </div>
             </div>
-
-            <!-- Bottom Video Details Overlay -->
-            <div class="absolute bottom-0 inset-x-0 z-30 p-5 bg-gradient-to-t from-black via-black/80 to-transparent space-y-2">
-                <div class="flex items-center space-x-2">
-                    <span id="playerCategoryBadge" class="px-2 py-0.5 bg-netflix-red text-white font-bold text-[9px] rounded">Sci-Fi</span>
-                    <span class="text-[10px] text-emerald-400 font-semibold"><i class="fa-solid fa-circle text-[6px]"></i> Transmitiendo desde Firebase</span>
-                </div>
-                <p id="playerModalDesc" class="text-xs text-zinc-300 line-clamp-3 leading-relaxed">Descripción del drama generado por IA...</p>
+            <div id="searchResultsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <p class="col-span-full text-center text-zinc-500 py-12 text-sm">Empieza a escribir para buscar tus dramas favoritos.</p>
             </div>
         </div>
 
-        <!-- ADMIN AUTH MODAL (Login) -->
-        <div id="adminAuthModal" class="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col justify-center p-6 transform translate-y-full transition-transform duration-300">
-            <div class="bg-netflix-card border border-zinc-800 rounded-3xl p-6 shadow-2xl relative space-y-5">
-                <button onclick="appController.closeAdminAuthModal()" class="absolute right-4 top-4 text-zinc-400 hover:text-white">
-                    <i class="fa-solid fa-xmark text-lg"></i>
+        <!-- VIEW: FAVORITES -->
+        <div id="favoritesView" class="hidden w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+            <div class="flex items-center space-x-4">
+                <button onclick="appController.switchTab('home')" class="w-10 h-10 rounded-full bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center transition shadow">
+                    <i class="fa-solid fa-arrow-left"></i>
                 </button>
-
-                <div class="text-center space-y-1">
-                    <div class="w-12 h-12 rounded-full bg-netflix-red/20 text-netflix-red flex items-center justify-center mx-auto text-lg mb-2">
-                        <i class="fa-solid fa-lock"></i>
-                    </div>
-                    <h2 class="text-lg font-bold">Panel de Administrador</h2>
-                    <p class="text-xs text-zinc-400">Inicia sesión con Firebase Auth para gestionar tus dramas.</p>
-                </div>
-
-                <form onsubmit="appController.handleAdminLogin(event)" class="space-y-3">
-                    <div>
-                        <label class="block text-[11px] font-medium text-zinc-400 mb-1">Correo Electrónico</label>
-                        <input type="email" id="adminEmail" required placeholder="admin@aidramas.com" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-medium text-zinc-400 mb-1">Contraseña</label>
-                        <input type="password" id="adminPassword" required placeholder="••••••••" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red">
-                    </div>
-                    <button type="submit" id="loginBtn" class="w-full py-3 bg-netflix-red hover:bg-red-700 text-white font-bold rounded-xl text-xs shadow-lg transition active:scale-95">
-                        Iniciar Sesión Segura
-                    </button>
-                </form>
+                <h2 class="text-xl font-bold text-white">Mi Lista de Dramas Guardados</h2>
+            </div>
+            <div id="favoritesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <!-- Dynamically populated -->
             </div>
         </div>
 
-        <!-- ADMIN DASHBOARD PANEL (CRUD Dramas) -->
-        <div id="adminPanelModal" class="absolute inset-0 z-50 bg-netflix-dark flex flex-col transform translate-y-full transition-transform duration-300 overflow-hidden">
-            <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-800 bg-zinc-900/60">
-                <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-cloud-arrow-up text-netflix-red"></i>
-                    <h2 class="font-bold text-sm">Gestor de Dramas Firebase</h2>
+    </main>
+
+    <!-- MOBILE BOTTOM NAVIGATION -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-netflix-dark/95 backdrop-blur-md border-t border-zinc-800/80 py-2.5 px-6 flex justify-around items-center text-zinc-400">
+        <button onclick="appController.switchTab('home')" class="flex flex-col items-center space-y-1 text-white transition" id="mobileNavHome">
+            <i class="fa-solid fa-house text-base"></i>
+            <span class="text-[10px] font-medium">Inicio</span>
+        </button>
+        <button onclick="appController.switchTab('search')" class="flex flex-col items-center space-y-1 hover:text-white transition" id="mobileNavSearch">
+            <i class="fa-solid fa-magnifying-glass text-base"></i>
+            <span class="text-[10px] font-medium">Buscar</span>
+        </button>
+        <button onclick="appController.switchTab('favorites')" class="flex flex-col items-center space-y-1 hover:text-white transition" id="mobileNavFav">
+            <i class="fa-solid fa-heart text-base"></i>
+            <span class="text-[10px] font-medium">Mi Lista</span>
+        </button>
+    </nav>
+
+    <!-- IMMERSIVE 9:16 PLAYER MODAL -->
+    <div id="playerModal" class="fixed inset-0 z-50 bg-black flex flex-col justify-between transform translate-y-full transition-transform duration-300 ease-out overflow-hidden">
+        <!-- Top Player Header with Back Button -->
+        <div class="absolute top-0 inset-x-0 z-30 flex items-center justify-between p-4 sm:p-6 bg-gradient-to-b from-black/90 to-transparent">
+            <button onclick="appController.closePlayer()" class="flex items-center space-x-2 px-4 py-2 rounded-full bg-black/60 hover:bg-white/20 text-white text-xs font-bold backdrop-blur-md transition">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Volver</span>
+            </button>
+            <div class="text-center">
+                <h3 id="playerModalTitle" class="text-xs sm:text-sm font-bold text-white truncate max-w-[220px]">Título</h3>
+                <span class="text-[10px] text-zinc-400">Formato 9:16 HD</span>
+            </div>
+            <button onclick="appController.togglePlayerFavorite()" id="playerFavIconBtn" class="w-10 h-10 rounded-full bg-black/60 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md transition">
+                <i class="fa-regular fa-heart text-sm"></i>
+            </button>
+        </div>
+
+        <!-- Video Container -->
+        <div class="relative w-full h-full flex items-center justify-center bg-black">
+            <video id="streamVideo" class="h-full w-auto aspect-[9/16] object-cover max-h-screen cursor-pointer shadow-2xl" loop playsinline webkit-playsinline onclick="appController.togglePlayPause()"></video>
+            <div id="playerPlayOverlay" class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 transition-opacity">
+                <div class="w-20 h-20 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center text-2xl shadow-xl">
+                    <i class="fa-solid fa-play"></i>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <button onclick="appController.adminLogout()" class="text-xs text-zinc-400 hover:text-white px-2.5 py-1 bg-zinc-800 rounded-lg">Cerrar Sesión</button>
-                    <button onclick="appController.closeAdminPanel()" class="w-8 h-8 rounded-full bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center">
-                        <i class="fa-solid fa-xmark"></i>
+            </div>
+        </div>
+
+        <!-- Bottom Video Details Overlay -->
+        <div class="absolute bottom-0 inset-x-0 z-30 p-6 sm:p-8 bg-gradient-to-t from-black via-black/80 to-transparent max-w-2xl mx-auto space-y-2">
+            <div class="flex items-center space-x-2">
+                <span id="playerCategoryBadge" class="px-2.5 py-0.5 bg-netflix-red text-white font-bold text-[10px] rounded uppercase">Sci-Fi</span>
+                <span class="text-[10px] text-emerald-400 font-semibold"><i class="fa-solid fa-circle text-[6px]"></i> Sincronizado Firebase</span>
+            </div>
+            <p id="playerModalDesc" class="text-xs sm:text-sm text-zinc-300 line-clamp-3 leading-relaxed">Sinopsis del drama...</p>
+        </div>
+    </div>
+
+    <!-- ADMIN AUTH & DASHBOARD MODAL -->
+    <div id="adminModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 transform translate-y-full transition-transform duration-300">
+        
+        <!-- LOGIN VIEW (If not logged in) -->
+        <div id="adminLoginView" class="w-full max-w-md bg-netflix-card border border-zinc-800 rounded-3xl p-8 shadow-2xl relative space-y-6">
+            <button onclick="appController.closeAdminModal()" class="absolute right-5 top-5 text-zinc-400 hover:text-white transition">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+
+            <div class="text-center space-y-2">
+                <div class="w-14 h-14 rounded-full bg-netflix-red/20 text-netflix-red flex items-center justify-center mx-auto text-xl mb-3 shadow-inner">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <h2 class="text-xl font-bold text-white">Panel de Administrador</h2>
+                <p class="text-xs text-zinc-400">Inicia sesión con Firebase Auth para gestionar tus dramas 9:16.</p>
+            </div>
+
+            <form onsubmit="appController.handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-400 mb-1.5">Correo Electrónico</label>
+                    <input type="email" id="adminEmail" required placeholder="admin@aidramas.com" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-zinc-400 mb-1.5">Contraseña</label>
+                    <input type="password" id="adminPassword" required placeholder="••••••••" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red transition">
+                </div>
+                <button type="submit" id="loginSubmitBtn" class="w-full py-3.5 bg-netflix-red hover:bg-red-700 text-white font-bold rounded-xl text-xs shadow-lg transition active:scale-95">
+                    Iniciar Sesión
+                </button>
+            </form>
+            <div class="flex justify-center pt-2">
+                <button onclick="appController.closeAdminModal()" class="text-xs text-zinc-400 hover:text-white flex items-center space-x-1.5 transition">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Volver al inicio</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- DASHBOARD VIEW (If logged in) -->
+        <div id="adminDashboardView" class="hidden w-full max-w-4xl h-[85vh] bg-netflix-dark border border-zinc-800 rounded-3xl flex flex-col shadow-2xl overflow-hidden relative">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-zinc-900/80">
+                <div class="flex items-center space-x-3">
+                    <button onclick="appController.closeAdminModal()" class="w-9 h-9 rounded-full bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center transition shadow">
+                        <i class="fa-solid fa-arrow-left"></i>
                     </button>
+                    <h2 class="font-bold text-sm text-white">Gestor de Dramas Firestore</h2>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span id="loggedUserEmail" class="text-xs text-zinc-400 hidden sm:inline">admin@aidramas.com</span>
+                    <button onclick="appController.handleLogout()" class="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium rounded-lg transition">Cerrar Sesión</button>
                 </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-5 space-y-6">
-                <!-- FORM TO ADD / UPLOAD DRAMA -->
-                <form id="dramaUploadForm" onsubmit="appController.handleSaveDrama(event)" class="space-y-4 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800">
-                    <h3 class="text-xs font-bold text-zinc-200 flex items-center space-x-2">
+            <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                <!-- FORM TO UPLOAD NEW DRAMA -->
+                <form id="uploadDramaForm" onsubmit="appController.handleSaveDrama(event)" class="space-y-4 bg-zinc-900/50 p-5 rounded-2xl border border-zinc-800">
+                    <h3 class="text-xs font-bold text-white flex items-center space-x-2">
                         <i class="fa-solid fa-circle-plus text-netflix-red"></i>
-                        <span>Publicar Nuevo Drama (9:16)</span>
+                        <span>Publicar Nuevo Drama en Formato 9:16</span>
                     </h3>
 
-                    <div>
-                        <label class="block text-[11px] font-medium text-zinc-400 mb-1">Título</label>
-                        <input type="text" id="newTitle" required placeholder="Ej. El Último Androide" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red">
-                    </div>
-
-                    <div>
-                        <label class="block text-[11px] font-medium text-zinc-400 mb-1">Categoría</label>
-                        <select id="newCategory" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-netflix-red">
-                            <option value="Sci-Fi">Ciencia Ficción</option>
-                            <option value="Romance">Romance IA</option>
-                            <option value="Suspense">Suspense</option>
-                            <option value="Fantasía">Fantasía</option>
-                        </select>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-medium text-zinc-400 mb-1">Título</label>
+                            <input type="text" id="newTitle" required placeholder="Ej. El Último Androide" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-zinc-400 mb-1">Categoría</label>
+                            <select id="newCategory" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-netflix-red">
+                                <option value="Sci-Fi">Ciencia Ficción</option>
+                                <option value="Romance">Romance IA</option>
+                                <option value="Suspense">Suspense</option>
+                                <option value="Fantasía">Fantasía</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div>
                         <label class="block text-[11px] font-medium text-zinc-400 mb-1">Descripción / Sinopsis</label>
-                        <textarea id="newDesc" rows="2" required placeholder="Sinopsis del drama..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red resize-none"></textarea>
+                        <textarea id="newDesc" rows="2" required placeholder="Sinopsis del drama..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red resize-none"></textarea>
                     </div>
 
-                    <div>
-                        <label class="block text-[11px] font-medium text-zinc-400 mb-1">Enlace de Video (MP4 / WebM formato 9:16)</label>
-                        <input type="url" id="newVideoUrl" required placeholder="https://assets.mixkit.co/videos/preview/..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-medium text-zinc-400 mb-1">Enlace de Video (MP4 9:16)</label>
+                            <input type="url" id="newVideoUrl" required placeholder="https://assets.mixkit.co/..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-zinc-400 mb-1">Enlace de Portada (Vertical)</label>
+                            <input type="url" id="newCoverUrl" required placeholder="https://images.unsplash.com/..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red">
+                        </div>
                     </div>
 
-                    <div>
-                        <label class="block text-[11px] font-medium text-zinc-400 mb-1">Enlace de Portada (Miniatura vertical 9:16)</label>
-                        <input type="url" id="newCoverUrl" required placeholder="https://images.unsplash.com/photo-..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red">
-                    </div>
-
-                    <button type="submit" id="saveDramaBtn" class="w-full py-2.5 bg-netflix-red hover:bg-red-700 text-white font-bold rounded-xl text-xs shadow-lg transition active:scale-95">
+                    <button type="submit" id="saveDramaBtn" class="w-full py-3 bg-netflix-red hover:bg-red-700 text-white font-bold rounded-xl text-xs shadow-lg transition active:scale-95">
                         Guardar en Firebase Firestore
                     </button>
                 </form>
 
-                <!-- ADMIN DRAMAS LIST -->
+                <!-- LIST OF EXISTING DRAMAS -->
                 <div class="space-y-3">
-                    <h3 class="text-xs font-bold text-zinc-200">Dramas Registrados en Base de Datos</h3>
+                    <h3 class="text-xs font-bold text-white">Dramas Registrados en Firestore</h3>
                     <div id="adminDramasManageList" class="space-y-2">
-                        <!-- Injected via JS -->
+                        <!-- Populated via JS -->
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- NOTIFICATION TOAST -->
-        <div id="toast" class="absolute top-16 left-1/2 transform -translate-x-1/2 z-50 bg-zinc-900 border border-zinc-700 text-white text-xs px-4 py-2 rounded-full shadow-2xl opacity-0 pointer-events-none transition-opacity duration-300 flex items-center space-x-2">
-            <i class="fa-solid fa-circle-check text-emerald-400"></i>
-            <span id="toastMsg">Acción completada</span>
-        </div>
-
     </div>
 
-    <!-- FIREBASE SDKs & APP SCRIPT -->
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-zinc-900 border border-zinc-700 text-white text-xs px-5 py-2.5 rounded-full shadow-2xl opacity-0 pointer-events-none transition-opacity duration-300 flex items-center space-x-2">
+        <i class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toastMsg">Acción exitosa</span>
+    </div>
+
+    <!-- FIREBASE & MAIN CONTROLLER SCRIPT -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics.js";
 
         const firebaseConfig = {
@@ -305,16 +336,14 @@
             measurementId: "G-YJZYPHRXZ6"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         try { getAnalytics(app); } catch(e) {}
 
-        // Seed default sample dramas if collection is empty
         const defaultSeedDramas = [
             {
-                id: 'default-1',
+                id: 'seed-1',
                 title: 'El Último Androide',
                 category: 'Sci-Fi',
                 description: 'En un futuro donde las máquinas sienten, un detective cibernético descubre un secreto prohibido.',
@@ -323,7 +352,7 @@
                 createdAt: Date.now() - 50000
             },
             {
-                id: 'default-2',
+                id: 'seed-2',
                 title: 'Reino de Cristal',
                 category: 'Fantasía',
                 description: 'La princesa de un imperio flotante generado por algoritmos busca su libertad.',
@@ -332,53 +361,66 @@
                 createdAt: Date.now() - 40000
             },
             {
-                id: 'default-3',
+                id: 'seed-3',
                 title: 'Amor en Código Binario',
                 category: 'Romance',
                 description: 'Dos inteligencias artificiales experimentan el amor humano en una red neuronal aislada.',
                 videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-animation-of-futuristic-devices-31936-large.mp4',
                 coverUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?q=80&w=1000&auto=format&fit=crop',
                 createdAt: Date.now() - 30000
+            },
+            {
+                id: 'seed-4',
+                title: 'Sombra Cibernética',
+                category: 'Suspense',
+                description: 'Un hacker corporativo es perseguido por una IA autónoma a través de la red global.',
+                videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-futuristic-sci-fi-tunnel-animation-41556-large.mp4',
+                coverUrl: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=1000&auto=format&fit=crop',
+                createdAt: Date.now() - 20000
             }
         ];
 
-        class NetflixDramaApp {
+        class NetflixHubApp {
             constructor() {
                 this.dramas = [];
                 this.favorites = JSON.parse(localStorage.getItem('netflix_ai_favs') || '[]');
                 this.currentCategory = 'all';
                 this.activeDramaId = null;
                 this.currentUser = null;
-                
+
                 this.initAuthListener();
-                this.fetchDramasFromFirestore();
+                this.fetchDramas();
             }
 
             initAuthListener() {
                 onAuthStateChanged(auth, (user) => {
                     this.currentUser = user;
+                    const label = document.getElementById('adminBtnLabel');
+                    if (user) {
+                        label.innerText = 'Panel Admin';
+                    } else {
+                        label.innerText = 'Admin';
+                    }
                 });
             }
 
-            async fetchDramasFromFirestore() {
+            async fetchDramas() {
                 try {
-                    const querySnapshot = await getDocs(collection(db, "ai_dramas"));
-                    if (querySnapshot.empty) {
-                        // Populate seed data
-                        for (const drama of defaultSeedDramas) {
-                            await addDoc(collection(db, "ai_dramas"), drama);
+                    const snap = await getDocs(collection(db, "ai_dramas"));
+                    if (snap.empty) {
+                        for (const d of defaultSeedDramas) {
+                            await addDoc(collection(db, "ai_dramas"), d);
                         }
-                        this.fetchDramasFromFirestore();
+                        this.fetchDramas();
                         return;
                     }
                     this.dramas = [];
-                    querySnapshot.forEach((docSnap) => {
+                    snap.forEach(docSnap => {
                         this.dramas.push({ id: docSnap.id, ...docSnap.data() });
                     });
                     this.renderAll();
                 } catch (error) {
-                    console.error("Error fetching Firestore:", error);
-                    // Fallback to local seeds if network fails
+                    console.error("Firestore error:", error);
                     this.dramas = defaultSeedDramas;
                     this.renderAll();
                 }
@@ -396,35 +438,45 @@
                 const searchView = document.getElementById('searchView');
                 const favoritesView = document.getElementById('favoritesView');
 
-                const navHome = document.getElementById('navHome');
-                const navSearch = document.getElementById('navSearch');
-                const navFav = document.getElementById('navFav');
-
                 [homeView, searchView, favoritesView].forEach(v => v.classList.add('hidden'));
-                [navHome, navSearch, navFav].forEach(n => n.classList.remove('text-white'));
-                [navHome, navSearch, navFav].forEach(n => n.classList.add('text-zinc-400'));
+
+                // Update desktop & mobile nav states
+                ['desktopNavHome', 'desktopNavSearch', 'desktopNavFav', 'mobileNavHome', 'mobileNavSearch', 'mobileNavFav'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.remove('text-white');
+                });
 
                 if (tab === 'home') {
                     homeView.classList.remove('hidden');
-                    navHome.classList.add('text-white');
+                    const dHome = document.getElementById('desktopNavHome');
+                    const mHome = document.getElementById('mobileNavHome');
+                    if (dHome) dHome.classList.add('text-white');
+                    if (mHome) mHome.classList.add('text-white');
                 } else if (tab === 'search') {
                     searchView.classList.remove('hidden');
-                    navSearch.classList.add('text-white');
+                    const dSearch = document.getElementById('desktopNavSearch');
+                    const mSearch = document.getElementById('mobileNavSearch');
+                    if (dSearch) dSearch.classList.add('text-white');
+                    if (mSearch) mSearch.classList.add('text-white');
                     document.getElementById('searchInput').focus();
                 } else if (tab === 'favorites') {
                     favoritesView.classList.remove('hidden');
-                    navFav.classList.add('text-white');
+                    const dFav = document.getElementById('desktopNavFav');
+                    const mFav = document.getElementById('mobileNavFav');
+                    if (dFav) dFav.classList.add('text-white');
+                    if (mFav) mFav.classList.add('text-white');
                     this.renderFavorites();
                 }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
 
             filterCategory(cat) {
                 this.currentCategory = cat;
                 document.querySelectorAll('.category-chip').forEach(btn => {
                     if (btn.innerText.includes(cat) || (cat === 'all' && btn.innerText === 'Todos')) {
-                        btn.className = "category-chip px-3.5 py-1.5 rounded-full bg-white text-black text-xs font-semibold whitespace-nowrap transition";
+                        btn.className = "category-chip px-4 py-2 rounded-full bg-white text-black text-xs font-bold whitespace-nowrap transition shadow";
                     } else {
-                        btn.className = "category-chip px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-300 text-xs font-semibold whitespace-nowrap transition";
+                        btn.className = "category-chip px-4 py-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold whitespace-nowrap transition";
                     }
                 });
                 this.renderCatalog();
@@ -434,22 +486,23 @@
                 const grid = document.getElementById('searchResultsGrid');
                 const q = query.toLowerCase().trim();
                 if (!q) {
-                    grid.innerHTML = `<p class="col-span-3 text-center text-xs text-zinc-500 py-10">Escribe algo para buscar dramas...</p>`;
+                    grid.innerHTML = `<p class="col-span-full text-center text-zinc-500 py-12 text-sm">Empieza a escribir para buscar tus dramas favoritos.</p>`;
                     return;
                 }
 
                 const results = this.dramas.filter(d => d.title.toLowerCase().includes(q) || d.description.toLowerCase().includes(q) || d.category.toLowerCase().includes(q));
                 if (results.length === 0) {
-                    grid.innerHTML = `<p class="col-span-3 text-center text-xs text-zinc-500 py-10">No se encontraron dramas.</p>`;
+                    grid.innerHTML = `<p class="col-span-full text-center text-zinc-500 py-12 text-sm">No se encontraron dramas con ese término.</p>`;
                     return;
                 }
 
                 grid.innerHTML = results.map(d => `
-                    <div onclick="appController.openPlayer('${d.id}')" class="relative rounded-xl overflow-hidden aspect-[9/16] bg-zinc-900 border border-zinc-800 cursor-pointer group active:scale-95 transition">
-                        <img src="${d.coverUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://placehold.co/300x533/18181b/71717a?text=AI+Drama'">
-                        <div class="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black via-black/60 to-transparent">
-                            <h4 class="text-[11px] font-bold text-white truncate">${d.title}</h4>
-                            <span class="text-[9px] text-zinc-400">${d.category}</span>
+                    <div onclick="appController.openPlayer('${d.id}')" class="relative rounded-2xl overflow-hidden aspect-[9/16] bg-zinc-900 border border-zinc-800/80 cursor-pointer group shadow-xl transition transform hover:-translate-y-1.5 duration-300">
+                        <img src="${d.coverUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700" onerror="this.src='https://placehold.co/300x533/18181b/71717a?text=AI+Drama'">
+                        <div class="absolute top-3 right-3 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded-md text-[9px] font-bold text-white tracking-widest">9:16</div>
+                        <div class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black via-black/80 to-transparent space-y-0.5">
+                            <h4 class="text-xs sm:text-sm font-bold text-white truncate">${d.title}</h4>
+                            <span class="text-[10px] text-zinc-400 font-medium">${d.category}</span>
                         </div>
                     </div>
                 `).join('');
@@ -469,7 +522,15 @@
                 document.getElementById('heroCover').src = hero.coverUrl;
 
                 document.getElementById('heroPlayBtn').onclick = () => this.openPlayer(hero.id);
-                document.getElementById('heroInfoBtn').onclick = () => this.openPlayer(hero.id);
+                document.getElementById('heroFavBtn').onclick = () => {
+                    if (!this.favorites.includes(hero.id)) {
+                        this.favorites.push(hero.id);
+                        localStorage.setItem('netflix_ai_favs', JSON.stringify(this.favorites));
+                        this.showToast('Agregado a Mi Lista');
+                    } else {
+                        this.showToast('Ya está en tu lista');
+                    }
+                };
             }
 
             renderCatalog() {
@@ -479,17 +540,17 @@
                     : this.dramas.filter(d => d.category === this.currentCategory);
 
                 if (filtered.length === 0) {
-                    grid.innerHTML = `<p class="col-span-3 text-center text-xs text-zinc-500 py-8">No hay dramas en esta categoría.</p>`;
+                    grid.innerHTML = `<p class="col-span-full text-center text-zinc-500 py-12 text-sm">No hay dramas disponibles en esta categoría.</p>`;
                     return;
                 }
 
                 grid.innerHTML = filtered.map(d => `
-                    <div onclick="appController.openPlayer('${d.id}')" class="relative rounded-xl overflow-hidden aspect-[9/16] bg-zinc-900 border border-zinc-800 cursor-pointer group active:scale-95 transition shadow-lg">
-                        <img src="${d.coverUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://placehold.co/300x533/18181b/71717a?text=AI'">
-                        <div class="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded text-[8px] font-bold text-white">9:16</div>
-                        <div class="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black via-black/70 to-transparent">
-                            <h4 class="text-[11px] font-bold text-white truncate">${d.title}</h4>
-                            <span class="text-[9px] text-zinc-400">${d.category}</span>
+                    <div onclick="appController.openPlayer('${d.id}')" class="relative rounded-2xl overflow-hidden aspect-[9/16] bg-zinc-900 border border-zinc-800/80 cursor-pointer group shadow-xl transition transform hover:-translate-y-1.5 duration-300">
+                        <img src="${d.coverUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700" onerror="this.src='https://placehold.co/300x533/18181b/71717a?text=AI+Drama'">
+                        <div class="absolute top-3 right-3 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded-md text-[9px] font-bold text-white tracking-widest">9:16</div>
+                        <div class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black via-black/80 to-transparent space-y-0.5">
+                            <h4 class="text-xs sm:text-sm font-bold text-white truncate">${d.title}</h4>
+                            <span class="text-[10px] text-zinc-400 font-medium">${d.category}</span>
                         </div>
                     </div>
                 `).join('');
@@ -500,16 +561,17 @@
                 const favDramas = this.dramas.filter(d => this.favorites.includes(d.id));
 
                 if (favDramas.length === 0) {
-                    grid.innerHTML = `<p class="col-span-3 text-center text-xs text-zinc-500 py-10">Aún no has agregado ningún drama a tu lista.</p>`;
+                    grid.innerHTML = `<p class="col-span-full text-center text-zinc-500 py-12 text-sm">Aún no has agregado ningún drama a tu lista.</p>`;
                     return;
                 }
 
                 grid.innerHTML = favDramas.map(d => `
-                    <div onclick="appController.openPlayer('${d.id}')" class="relative rounded-xl overflow-hidden aspect-[9/16] bg-zinc-900 border border-zinc-800 cursor-pointer group active:scale-95 transition">
-                        <img src="${d.coverUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                        <div class="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black via-black/60 to-transparent">
-                            <h4 class="text-[11px] font-bold text-white truncate">${d.title}</h4>
-                            <span class="text-[9px] text-zinc-400">${d.category}</span>
+                    <div onclick="appController.openPlayer('${d.id}')" class="relative rounded-2xl overflow-hidden aspect-[9/16] bg-zinc-900 border border-zinc-800/80 cursor-pointer group shadow-xl transition transform hover:-translate-y-1.5 duration-300">
+                        <img src="${d.coverUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700" onerror="this.src='https://placehold.co/300x533/18181b/71717a?text=AI+Drama'">
+                        <div class="absolute top-3 right-3 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded-md text-[9px] font-bold text-white tracking-widest">9:16</div>
+                        <div class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black via-black/80 to-transparent space-y-0.5">
+                            <h4 class="text-xs sm:text-sm font-bold text-white truncate">${d.title}</h4>
+                            <span class="text-[10px] text-zinc-400 font-medium">${d.category}</span>
                         </div>
                     </div>
                 `).join('');
@@ -532,14 +594,11 @@
                 });
 
                 this.updatePlayerFavIcon();
-
-                const modal = document.getElementById('playerModal');
-                modal.classList.remove('translate-y-full');
+                document.getElementById('playerModal').classList.remove('translate-y-full');
             }
 
             closePlayer() {
-                const modal = document.getElementById('playerModal');
-                modal.classList.add('translate-y-full');
+                document.getElementById('playerModal').classList.add('translate-y-full');
                 const video = document.getElementById('streamVideo');
                 video.pause();
                 video.currentTime = 0;
@@ -551,10 +610,10 @@
                 const overlay = document.getElementById('playerPlayOverlay');
                 if (video.paused) {
                     video.play();
-                    overlay.innerHTML = `<div class="w-16 h-16 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center text-xl"><i class="fa-solid fa-play"></i></div>`;
+                    overlay.innerHTML = `<div class="w-20 h-20 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center text-2xl shadow-xl"><i class="fa-solid fa-play"></i></div>`;
                 } else {
                     video.pause();
-                    overlay.innerHTML = `<div class="w-16 h-16 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center text-xl"><i class="fa-solid fa-pause"></i></div>`;
+                    overlay.innerHTML = `<div class="w-20 h-20 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center text-2xl shadow-xl"><i class="fa-solid fa-pause"></i></div>`;
                 }
                 overlay.classList.remove('opacity-0');
                 setTimeout(() => overlay.classList.add('opacity-0'), 500);
@@ -575,63 +634,63 @@
             }
 
             updatePlayerFavIcon() {
-                const btn = document.getElementById('playerFavBtn');
+                const btn = document.getElementById('playerFavIconBtn');
                 const isFav = this.favorites.includes(this.activeDramaId);
-                btn.innerHTML = `<i class="fa-${isFav ? 'solid' : 'regular'} fa-heart text-xs ${isFav ? 'text-netflix-red' : ''}"></i>`;
+                btn.innerHTML = `<i class="fa-${isFav ? 'solid' : 'regular'} fa-heart text-sm ${isFav ? 'text-netflix-red' : ''}"></i>`;
             }
 
-            openAdminAuthModal() {
+            openAdminModal() {
+                const modal = document.getElementById('adminModal');
+                modal.classList.remove('translate-y-full');
+                
+                const loginView = document.getElementById('adminLoginView');
+                const dashView = document.getElementById('adminDashboardView');
+
                 if (this.currentUser) {
-                    this.openAdminPanel();
+                    loginView.classList.add('hidden');
+                    dashView.classList.remove('hidden');
+                    document.getElementById('loggedUserEmail').innerText = this.currentUser.email;
+                    this.renderAdminManageList();
                 } else {
-                    document.getElementById('adminAuthModal').classList.remove('translate-y-full');
+                    loginView.classList.remove('hidden');
+                    dashView.classList.add('hidden');
                 }
             }
 
-            closeAdminAuthModal() {
-                document.getElementById('adminAuthModal').classList.add('translate-y-full');
+            closeAdminModal() {
+                document.getElementById('adminModal').classList.add('translate-y-full');
+                this.fetchDramas();
             }
 
-            async handleAdminLogin(e) {
+            async handleLogin(e) {
                 e.preventDefault();
                 const email = document.getElementById('adminEmail').value.trim();
                 const password = document.getElementById('adminPassword').value.trim();
-                const btn = document.getElementById('loginBtn');
-                
+                const btn = document.getElementById('loginSubmitBtn');
+
                 btn.disabled = true;
                 btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Autenticando...`;
 
                 try {
-                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                    this.currentUser = userCredential.user;
-                    this.closeAdminAuthModal();
-                    this.openAdminPanel();
-                    this.showToast('¡Bienvenido Administrador!');
+                    const cred = await signInWithEmailAndPassword(auth, email, password);
+                    this.currentUser = cred.user;
+                    this.showToast('¡Sesión iniciada con éxito!');
+                    this.openAdminModal();
                 } catch (error) {
-                    console.error("Auth error:", error);
-                    this.showToast('Credenciales incorrectas o error en Firebase Auth');
+                    console.error(error);
+                    this.showToast('Error: Credenciales incorrectas');
                 } finally {
                     btn.disabled = false;
-                    btn.innerHTML = `Iniciar Sesión Segura`;
+                    btn.innerHTML = `Iniciar Sesión`;
                 }
             }
 
-            adminLogout() {
+            handleLogout() {
                 signOut(auth).then(() => {
                     this.currentUser = null;
-                    this.closeAdminPanel();
-                    this.showToast('Sesión de administrador cerrada');
+                    this.showToast('Sesión cerrada');
+                    this.openAdminModal();
                 });
-            }
-
-            openAdminPanel() {
-                document.getElementById('adminPanelModal').classList.remove('translate-y-full');
-                this.renderAdminManageList();
-            }
-
-            closeAdminPanel() {
-                document.getElementById('adminPanelModal').classList.add('translate-y-full');
-                this.fetchDramasFromFirestore();
             }
 
             async handleSaveDrama(e) {
@@ -650,12 +709,12 @@
                     await addDoc(collection(db, "ai_dramas"), {
                         title, category, description, videoUrl, coverUrl, createdAt: Date.now()
                     });
-                    document.getElementById('dramaUploadForm').reset();
-                    this.showToast('¡Drama publicado con éxito en Firebase!');
+                    document.getElementById('uploadDramaForm').reset();
+                    this.showToast('¡Drama publicado correctamente!');
                     this.renderAdminManageList();
                 } catch (err) {
                     console.error(err);
-                    this.showToast('Error al guardar en Firestore');
+                    this.showToast('Error al guardar en Firebase');
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = `Guardar en Firebase Firestore`;
@@ -663,10 +722,10 @@
             }
 
             async deleteDrama(id) {
-                if (!confirm("¿Estás seguro de eliminar este drama?")) return;
+                if (!confirm('¿Estás seguro de eliminar este drama de Firestore?')) return;
                 try {
                     await deleteDoc(doc(db, "ai_dramas", id));
-                    this.showToast('Drama eliminado de Firebase');
+                    this.showToast('Drama eliminado');
                     this.renderAdminManageList();
                 } catch (err) {
                     console.error(err);
@@ -681,15 +740,15 @@
                     return;
                 }
                 list.innerHTML = this.dramas.map(d => `
-                    <div class="flex items-center justify-between bg-zinc-900 border border-zinc-800 p-2.5 rounded-xl">
+                    <div class="flex items-center justify-between bg-zinc-950 border border-zinc-800 p-3 rounded-xl">
                         <div class="flex items-center space-x-3 truncate">
-                            <img src="${d.coverUrl}" class="w-9 h-14 object-cover rounded-lg flex-shrink-0" onerror="this.src='https://placehold.co/100x150/18181b/71717a?text=AI'">
+                            <img src="${d.coverUrl}" class="w-10 h-16 object-cover rounded-lg flex-shrink-0" onerror="this.src='https://placehold.co/100x150/18181b/71717a?text=AI'">
                             <div class="truncate">
                                 <h4 class="text-xs font-bold text-white truncate">${d.title}</h4>
                                 <span class="text-[10px] text-zinc-400">${d.category}</span>
                             </div>
                         </div>
-                        <button onclick="appController.deleteDrama('${d.id}')" class="text-zinc-500 hover:text-red-400 p-2 transition">
+                        <button onclick="appController.deleteDrama('${d.id}')" class="text-zinc-500 hover:text-red-400 p-2.5 transition">
                             <i class="fa-solid fa-trash-can text-xs"></i>
                         </button>
                     </div>
@@ -697,8 +756,7 @@
             }
         }
 
-        // Global Controller Instance
-        const appController = new NetflixDramaApp();
+        const appController = new NetflixHubApp();
     </script>
 </body>
 </html>
