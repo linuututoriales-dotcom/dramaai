@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Drama Reels Hub</title>
+    <title>AI Netflix - Dramas 9:16</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
         tailwind.config = {
@@ -14,7 +14,7 @@
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
-                        brand: { 500: '#8b5cf6', 600: '#7c3aed', dark: '#09090b' }
+                        netflix: { red: '#E50914', dark: '#141414', card: '#1f1f1f' }
                     }
                 }
             }
@@ -23,352 +23,659 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #09090b;
-            color: #f4f4f5;
+            background-color: #141414;
+            color: #ffffff;
             overscroll-behavior-y: none;
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .snap-y-mandatory { scroll-snap-type: y mandatory; }
-        .snap-start { scroll-snap-align: start; }
         video::-webkit-media-controls { display: none !important; }
     </style>
 </head>
 <body class="h-full overflow-hidden flex flex-col justify-between select-none">
 
-    <div id="app" class="relative w-full h-full max-w-md mx-auto bg-black flex flex-col shadow-2xl overflow-hidden sm:border-x sm:border-zinc-800">
+    <!-- APP CONTAINER (Mobile Frame optimized) -->
+    <div id="app" class="relative w-full h-full max-w-md mx-auto bg-netflix-dark flex flex-col shadow-2xl overflow-hidden sm:border-x sm:border-zinc-800">
 
-        <!-- TOP BAR / HEADER -->
-        <header class="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-auto">
+        <!-- TOP NAVIGATION / HEADER -->
+        <header id="mainHeader" class="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/90 via-black/50 to-transparent">
             <div class="flex items-center space-x-2">
-                <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" id="serverStatusIndicator"></span>
-                <span class="text-xs font-semibold tracking-wider uppercase text-zinc-300" id="serverStatusText">Servidor Local Activo</span>
+                <span class="text-netflix-red font-extrabold text-xl tracking-tighter">N</span>
+                <span class="text-xs font-semibold tracking-wider uppercase text-zinc-300">AI Dramas</span>
             </div>
             <div class="flex items-center space-x-3">
-                <button onclick="appState.openStudio()" class="bg-brand-600 hover:bg-brand-500 text-white px-3 py-1.5 rounded-full text-xs font-medium shadow-lg flex items-center space-x-1.5 transition active:scale-95">
-                    <i class="fa-solid fa-server"></i>
-                    <span>Crear / Servidor</span>
+                <button onclick="appController.openSearch()" class="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition">
+                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                </button>
+                <button onclick="appController.openAdminAuthModal()" class="w-9 h-9 rounded-full bg-netflix-red/80 hover:bg-netflix-red text-white flex items-center justify-center transition shadow-lg">
+                    <i class="fa-solid fa-user-shield text-xs"></i>
                 </button>
             </div>
         </header>
 
-        <!-- REELS VERTICAL CONTAINER (9:16) -->
-        <main id="reelsContainer" class="relative w-full h-full overflow-y-scroll snap-y-mandatory no-scrollbar flex flex-col">
-            <!-- Dynamic reels injected here -->
-        </main>
+        <!-- MAIN VIEWS CONTAINER -->
+        <div id="viewsContainer" class="relative w-full h-full overflow-y-auto no-scrollbar pb-24 pt-14">
+            
+            <!-- VIEW: CATALOG / NETFLIX HOME -->
+            <div id="homeView" class="space-y-6">
+                <!-- HERO FEATURED BANNER -->
+                <div id="heroBanner" class="relative w-full h-[420px] bg-zinc-900 overflow-hidden flex flex-col justify-end p-5">
+                    <!-- Dynamic Hero background/video -->
+                    <div id="heroMediaContainer" class="absolute inset-0 z-0">
+                        <img id="heroCover" src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop" class="w-full h-full object-cover opacity-80" alt="Hero">
+                        <div class="absolute inset-0 bg-gradient-to-t from-netflix-dark via-netflix-dark/40 to-transparent"></div>
+                    </div>
+                    
+                    <div class="relative z-10 space-y-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-0.5 bg-netflix-red text-white font-bold text-[10px] rounded uppercase">Estreno IA</span>
+                            <span class="text-xs text-zinc-300 font-medium" id="heroCategory">Ciencia Ficción</span>
+                        </div>
+                        <h1 id="heroTitle" class="text-2xl font-black tracking-tight text-white drop-shadow-lg">Cargando destacados...</h1>
+                        <p id="heroDesc" class="text-xs text-zinc-300 line-clamp-2 drop-shadow">Explora los mejores dramas generados por inteligencia artificial en formato vertical 9:16.</p>
+                        
+                        <div class="flex items-center space-x-3 pt-2">
+                            <button id="heroPlayBtn" class="flex-1 bg-white hover:bg-zinc-200 text-black font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-2 transition shadow-lg active:scale-95">
+                                <i class="fa-solid fa-play text-black"></i>
+                                <span>Reproducir</span>
+                            </button>
+                            <button id="heroInfoBtn" class="flex-1 bg-zinc-800/80 hover:bg-zinc-700 backdrop-blur-md text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-2 transition shadow-lg active:scale-95">
+                                <i class="fa-solid fa-circle-info"></i>
+                                <span>Más info</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-        <!-- EMPTY STATE (Shown if no dramas exist) -->
-        <div id="emptyState" class="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 text-center bg-zinc-950 hidden">
-            <div class="w-16 h-16 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-brand-500 text-2xl mb-4 shadow-inner">
-                <i class="fa-solid fa-clapperboard"></i>
+                <!-- CATEGORIES CHIPS -->
+                <div class="px-4 flex items-center space-x-2 overflow-x-auto no-scrollbar">
+                    <button onclick="appController.filterCategory('all')" class="category-chip px-3.5 py-1.5 rounded-full bg-white text-black text-xs font-semibold whitespace-nowrap transition">Todos</button>
+                    <button onclick="appController.filterCategory('Romance')" class="category-chip px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-300 text-xs font-semibold whitespace-nowrap transition">Romance IA</button>
+                    <button onclick="appController.filterCategory('Sci-Fi')" class="category-chip px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-300 text-xs font-semibold whitespace-nowrap transition">Ciencia Ficción</button>
+                    <button onclick="appController.filterCategory('Suspense')" class="category-chip px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-300 text-xs font-semibold whitespace-nowrap transition">Suspense</button>
+                    <button onclick="appController.filterCategory('Fantasía')" class="category-chip px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-300 text-xs font-semibold whitespace-nowrap transition">Fantasía</button>
+                </div>
+
+                <!-- CATALOG SECTION 1: TENDENCIAS -->
+                <div class="space-y-3 px-4">
+                    <h2 class="font-bold text-sm text-zinc-200 flex items-center space-x-2">
+                        <span class="w-1 h-3.5 bg-netflix-red rounded-full"></span>
+                        <span>Tendencias en Dramas 9:16</span>
+                    </h2>
+                    <div id="catalogGrid" class="grid grid-cols-3 gap-2.5">
+                        <!-- Dynamic items injected here -->
+                    </div>
+                </div>
             </div>
-            <h2 class="text-xl font-bold mb-2">No hay dramas IA disponibles</h2>
-            <p class="text-sm text-zinc-400 mb-6 max-w-xs">Configura tu servidor local subiendo videos generados por IA con su portada y descripción.</p>
-            <button onclick="appState.openStudio()" class="bg-brand-600 text-white font-medium px-6 py-3 rounded-full text-sm shadow-xl hover:bg-brand-500 transition active:scale-95">
-                Agregar mi primer drama
-            </button>
+
+            <!-- VIEW: SEARCH RESULTS -->
+            <div id="searchView" class="hidden px-4 space-y-4">
+                <div class="relative mt-2">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-zinc-400 text-xs"></i>
+                    <input type="text" id="searchInput" oninput="appController.handleSearch(this.value)" placeholder="Buscar por título, género o sinopsis..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-netflix-red transition">
+                </div>
+                <div id="searchResultsGrid" class="grid grid-cols-3 gap-2.5">
+                    <!-- Search results injected here -->
+                </div>
+            </div>
+
+            <!-- VIEW: FAVORITES -->
+            <div id="favoritesView" class="hidden px-4 space-y-3">
+                <h2 class="font-bold text-sm text-zinc-200 mb-2">Mi Lista de Dramas</h2>
+                <div id="favoritesGrid" class="grid grid-cols-3 gap-2.5">
+                    <!-- Favorites injected here -->
+                </div>
+            </div>
+
         </div>
 
-        <!-- BOTTOM NAVIGATION BAR -->
-        <nav class="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black via-black/80 to-transparent pb-6 pt-4 px-6 flex justify-around items-center text-zinc-400 border-t border-zinc-900/40">
-            <button onclick="appState.filterFeed('all')" class="flex flex-col items-center space-y-1 text-brand-500 transition" id="navHomeBtn">
-                <i class="fa-solid fa-house text-lg"></i>
-                <span class="text-[10px] font-medium">Inicio</span>
+        <!-- BOTTOM NETFLIX NAVIGATION BAR -->
+        <nav class="absolute bottom-0 left-0 right-0 z-30 bg-netflix-dark/95 backdrop-blur-md border-t border-zinc-800/80 py-2.5 px-6 flex justify-around items-center text-zinc-400">
+            <button onclick="appController.switchTab('home')" class="flex flex-col items-center space-y-1 text-white transition" id="navHome">
+                <i class="fa-solid fa-house text-base"></i>
+                <span class="text-[9px] font-medium">Inicio</span>
             </button>
-            <button onclick="appState.openStudio()" class="flex flex-col items-center space-y-1 hover:text-white transition">
-                <i class="fa-solid fa-plus-circle text-lg text-brand-500"></i>
-                <span class="text-[10px] font-medium">Subir</span>
+            <button onclick="appController.switchTab('search')" class="flex flex-col items-center space-y-1 hover:text-white transition" id="navSearch">
+                <i class="fa-solid fa-magnifying-glass text-base"></i>
+                <span class="text-[9px] font-medium">Buscar</span>
             </button>
-            <button onclick="appState.openFavorites()" class="flex flex-col items-center space-y-1 hover:text-white transition" id="navFavBtn">
-                <i class="fa-solid fa-heart text-lg"></i>
-                <span class="text-[10px] font-medium">Favoritos</span>
+            <button onclick="appController.switchTab('favorites')" class="flex flex-col items-center space-y-1 hover:text-white transition" id="navFav">
+                <i class="fa-solid fa-heart text-base"></i>
+                <span class="text-[9px] font-medium">Mi Lista</span>
             </button>
         </nav>
 
-        <!-- STUDIO / SERVER MANAGEMENT MODAL -->
-        <div id="studioModal" class="absolute inset-0 z-50 bg-zinc-950/95 backdrop-blur-md flex flex-col transform translate-y-full transition-transform duration-300 ease-out overflow-hidden">
-            <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/50">
-                <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-server text-brand-500"></i>
-                    <h2 class="font-bold text-base">Panel Servidor & Gestor IA</h2>
+        <!-- 9:16 VERTICAL STREAMING PLAYER MODAL -->
+        <div id="playerModal" class="absolute inset-0 z-50 bg-black flex flex-col justify-between transform translate-y-full transition-transform duration-300 ease-out overflow-hidden">
+            <!-- Top Player Bar -->
+            <div class="absolute top-0 inset-x-0 z-30 flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent">
+                <button onclick="appController.closePlayer()" class="w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-white/20 transition">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <div class="text-center">
+                    <h3 id="playerModalTitle" class="text-xs font-bold text-white truncate max-w-[200px]">Título del Drama</h3>
+                    <span class="text-[10px] text-zinc-400">Formato 9:16 HD</span>
                 </div>
-                <button onclick="appState.closeStudio()" class="w-8 h-8 rounded-full bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition">
-                    <i class="fa-solid fa-xmark"></i>
+                <button onclick="appController.togglePlayerFavorite()" id="playerFavBtn" class="w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-white/20 transition">
+                    <i class="fa-regular fa-heart text-xs"></i>
                 </button>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-5 space-y-6">
-                <!-- SERVER NODE INFO -->
-                <div class="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-4 shadow-lg">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Nodo Local (Browser Storage)</span>
-                        <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold rounded-full border border-emerald-500/20">Online</span>
-                    </div>
-                    <p class="text-xs text-zinc-400 mb-3">Tus dramas se almacenan de forma local en este navegador simulando un servidor de streaming en red local.</p>
-                    <div class="flex items-center justify-between bg-black/40 px-3 py-2 rounded-xl text-xs font-mono text-zinc-300 border border-zinc-800">
-                        <span class="truncate">http://127.0.0.1:8080/ai-dramas</span>
-                        <span id="storageCountBadge" class="bg-brand-600 text-white px-2 py-0.5 rounded-full text-[10px]">0 dramas</span>
+            <!-- Video 9:16 Element -->
+            <div class="relative w-full h-full flex items-center justify-center bg-black">
+                <video id="streamVideo" class="w-full h-full object-cover" loop playsinline webkit-playsinline onclick="appController.togglePlayPause()"></video>
+                <div id="playerPlayOverlay" class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 transition-opacity">
+                    <div class="w-16 h-16 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-play"></i>
                     </div>
                 </div>
+            </div>
 
-                <!-- ADD DRAMA FORM -->
-                <form id="dramaForm" onsubmit="appState.handleFormSubmit(event)" class="space-y-4">
-                    <h3 class="text-sm font-bold text-zinc-200 flex items-center space-x-2">
-                        <i class="fa-solid fa-circle-plus text-brand-500"></i>
-                        <span>Publicar Nuevo Drama IA</span>
+            <!-- Bottom Video Details Overlay -->
+            <div class="absolute bottom-0 inset-x-0 z-30 p-5 bg-gradient-to-t from-black via-black/80 to-transparent space-y-2">
+                <div class="flex items-center space-x-2">
+                    <span id="playerCategoryBadge" class="px-2 py-0.5 bg-netflix-red text-white font-bold text-[9px] rounded">Sci-Fi</span>
+                    <span class="text-[10px] text-emerald-400 font-semibold"><i class="fa-solid fa-circle text-[6px]"></i> Transmitiendo desde Firebase</span>
+                </div>
+                <p id="playerModalDesc" class="text-xs text-zinc-300 line-clamp-3 leading-relaxed">Descripción del drama generado por IA...</p>
+            </div>
+        </div>
+
+        <!-- ADMIN AUTH MODAL (Login) -->
+        <div id="adminAuthModal" class="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col justify-center p-6 transform translate-y-full transition-transform duration-300">
+            <div class="bg-netflix-card border border-zinc-800 rounded-3xl p-6 shadow-2xl relative space-y-5">
+                <button onclick="appController.closeAdminAuthModal()" class="absolute right-4 top-4 text-zinc-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+
+                <div class="text-center space-y-1">
+                    <div class="w-12 h-12 rounded-full bg-netflix-red/20 text-netflix-red flex items-center justify-center mx-auto text-lg mb-2">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <h2 class="text-lg font-bold">Panel de Administrador</h2>
+                    <p class="text-xs text-zinc-400">Inicia sesión con Firebase Auth para gestionar tus dramas.</p>
+                </div>
+
+                <form onsubmit="appController.handleAdminLogin(event)" class="space-y-3">
+                    <div>
+                        <label class="block text-[11px] font-medium text-zinc-400 mb-1">Correo Electrónico</label>
+                        <input type="email" id="adminEmail" required placeholder="admin@aidramas.com" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-zinc-400 mb-1">Contraseña</label>
+                        <input type="password" id="adminPassword" required placeholder="••••••••" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red">
+                    </div>
+                    <button type="submit" id="loginBtn" class="w-full py-3 bg-netflix-red hover:bg-red-700 text-white font-bold rounded-xl text-xs shadow-lg transition active:scale-95">
+                        Iniciar Sesión Segura
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ADMIN DASHBOARD PANEL (CRUD Dramas) -->
+        <div id="adminPanelModal" class="absolute inset-0 z-50 bg-netflix-dark flex flex-col transform translate-y-full transition-transform duration-300 overflow-hidden">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-800 bg-zinc-900/60">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-cloud-arrow-up text-netflix-red"></i>
+                    <h2 class="font-bold text-sm">Gestor de Dramas Firebase</h2>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="appController.adminLogout()" class="text-xs text-zinc-400 hover:text-white px-2.5 py-1 bg-zinc-800 rounded-lg">Cerrar Sesión</button>
+                    <button onclick="appController.closeAdminPanel()" class="w-8 h-8 rounded-full bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-5 space-y-6">
+                <!-- FORM TO ADD / UPLOAD DRAMA -->
+                <form id="dramaUploadForm" onsubmit="appController.handleSaveDrama(event)" class="space-y-4 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800">
+                    <h3 class="text-xs font-bold text-zinc-200 flex items-center space-x-2">
+                        <i class="fa-solid fa-circle-plus text-netflix-red"></i>
+                        <span>Publicar Nuevo Drama (9:16)</span>
                     </h3>
 
                     <div>
-                        <label class="block text-xs font-medium text-zinc-400 mb-1">Título del Drama</label>
-                        <input type="text" id="dramaTitle" required placeholder="Ej. Crónicas del Futuro Ep. 1" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition">
+                        <label class="block text-[11px] font-medium text-zinc-400 mb-1">Título</label>
+                        <input type="text" id="newTitle" required placeholder="Ej. El Último Androide" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red">
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-zinc-400 mb-1">Descripción / Sinopsis</label>
-                        <textarea id="dramaDesc" rows="2" required placeholder="Describe la trama generada por IA..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition resize-none"></textarea>
+                        <label class="block text-[11px] font-medium text-zinc-400 mb-1">Categoría</label>
+                        <select id="newCategory" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-netflix-red">
+                            <option value="Sci-Fi">Ciencia Ficción</option>
+                            <option value="Romance">Romance IA</option>
+                            <option value="Suspense">Suspense</option>
+                            <option value="Fantasía">Fantasía</option>
+                        </select>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-zinc-400 mb-1">Archivo de Video (Local o Enlace MP4/WebM)</label>
-                        <div class="grid grid-cols-2 gap-2 mb-2">
-                            <button type="button" id="tabVideoFile" onclick="appState.setVideoInputMode('file')" class="py-2 bg-brand-600 text-white text-xs font-medium rounded-xl transition">Subir Archivo</button>
-                            <button type="button" id="tabVideoUrl" onclick="appState.setVideoInputMode('url')" class="py-2 bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs font-medium rounded-xl transition">Enlace URL</button>
-                        </div>
-                        <div id="videoFileContainer">
-                            <input type="file" id="dramaVideoFile" accept="video/*" class="w-full text-xs text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700 cursor-pointer">
-                        </div>
-                        <div id="videoUrlContainer" class="hidden">
-                            <input type="url" id="dramaVideoUrl" placeholder="https://ejemplo.com/video.mp4" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition">
-                        </div>
+                        <label class="block text-[11px] font-medium text-zinc-400 mb-1">Descripción / Sinopsis</label>
+                        <textarea id="newDesc" rows="2" required placeholder="Sinopsis del drama..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red resize-none"></textarea>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-zinc-400 mb-1">Imagen de Portada (Miniatura 9:16)</label>
-                        <input type="url" id="dramaCoverUrl" placeholder="https://images.unsplash.com/... (opcional)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition">
-                        <p class="text-[10px] text-zinc-500 mt-1">Si dejas vacío, se extraerá el primer fotograma del video automáticamente.</p>
+                        <label class="block text-[11px] font-medium text-zinc-400 mb-1">Enlace de Video (MP4 / WebM formato 9:16)</label>
+                        <input type="url" id="newVideoUrl" required placeholder="https://assets.mixkit.co/videos/preview/..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red">
                     </div>
 
-                    <button type="submit" id="submitBtn" class="w-full py-3 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-semibold rounded-xl text-sm shadow-lg transition active:scale-95 flex items-center justify-center space-x-2">
-                        <i class="fa-solid fa-cloud-arrow-up"></i>
-                        <span>Guardar y Transmitir en Servidor</span>
+                    <div>
+                        <label class="block text-[11px] font-medium text-zinc-400 mb-1">Enlace de Portada (Miniatura vertical 9:16)</label>
+                        <input type="url" id="newCoverUrl" required placeholder="https://images.unsplash.com/photo-..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red">
+                    </div>
+
+                    <button type="submit" id="saveDramaBtn" class="w-full py-2.5 bg-netflix-red hover:bg-red-700 text-white font-bold rounded-xl text-xs shadow-lg transition active:scale-95">
+                        Guardar en Firebase Firestore
                     </button>
                 </form>
 
-                <!-- MANAGEMENT LIST -->
-                <div class="space-y-3 pt-4 border-t border-zinc-800/80">
-                    <h3 class="text-sm font-bold text-zinc-200">Dramas en Servidor Local</h3>
-                    <div id="serverDramasManageList" class="space-y-2">
+                <!-- ADMIN DRAMAS LIST -->
+                <div class="space-y-3">
+                    <h3 class="text-xs font-bold text-zinc-200">Dramas Registrados en Base de Datos</h3>
+                    <div id="adminDramasManageList" class="space-y-2">
                         <!-- Injected via JS -->
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- COMMENTS MODAL -->
-        <div id="commentsModal" class="absolute inset-x-0 bottom-0 z-40 bg-zinc-900 rounded-t-3xl border-t border-zinc-800 p-5 transform translate-y-full transition-transform duration-300 max-h-[60vh] flex flex-col">
-            <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
-                <h3 class="font-bold text-sm">Comentarios (IA & Usuarios)</h3>
-                <button onclick="appState.closeComments()" class="text-zinc-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <div id="commentsList" class="flex-1 overflow-y-auto py-3 space-y-3 text-xs">
-                <!-- Comments injected -->
-            </div>
-            <div class="pt-3 border-t border-zinc-800 flex items-center space-x-2">
-                <input type="text" id="commentInput" placeholder="Escribe un comentario..." class="flex-1 bg-zinc-950 border border-zinc-800 rounded-full px-4 py-2 text-xs text-white focus:outline-none focus:border-brand-500">
-                <button onclick="appState.postComment()" class="w-9 h-9 rounded-full bg-brand-600 text-white flex items-center justify-center hover:bg-brand-500 transition"><i class="fa-solid fa-paper-plane text-xs"></i></button>
-            </div>
-        </div>
-
         <!-- NOTIFICATION TOAST -->
         <div id="toast" class="absolute top-16 left-1/2 transform -translate-x-1/2 z-50 bg-zinc-900 border border-zinc-700 text-white text-xs px-4 py-2 rounded-full shadow-2xl opacity-0 pointer-events-none transition-opacity duration-300 flex items-center space-x-2">
             <i class="fa-solid fa-circle-check text-emerald-400"></i>
-            <span id="toastMsg">Acción realizada con éxito</span>
+            <span id="toastMsg">Acción completada</span>
         </div>
 
     </div>
 
-    <script>
-        // Sample seed dramas for immediate amazing experience
-        const defaultDramas = [
+    <!-- FIREBASE SDKs & APP SCRIPT -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCPdvXiBKQxFmxNJdqov1CSbNe16WWIXm8",
+            authDomain: "nextcom--multiservicos-server.firebaseapp.com",
+            projectId: "nextcom--multiservicos-server",
+            storageBucket: "nextcom--multiservicos-server.firebasestorage.app",
+            messagingSenderId: "1011344400777",
+            appId: "1:1011344400777:web:e40a1a66d9f77046bd8158",
+            measurementId: "G-YJZYPHRXZ6"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        try { getAnalytics(app); } catch(e) {}
+
+        // Seed default sample dramas if collection is empty
+        const defaultSeedDramas = [
             {
-                id: 'drama-1',
-                title: 'El Último Androide Ep. 1',
-                description: 'En un Neo-Tokio gobernado por inteligencias artificiales renegadas, un detective cibernético descubre un secreto prohibido. 🤖✨ #AIDrama #Cyberpunk',
+                id: 'default-1',
+                title: 'El Último Androide',
+                category: 'Sci-Fi',
+                description: 'En un futuro donde las máquinas sienten, un detective cibernético descubre un secreto prohibido.',
                 videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-with-code-31938-large.mp4',
                 coverUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop',
-                likes: 1240,
-                liked: false,
-                comments: [
-                    { user: 'CyberFan99', text: '¡Increíble cómo ha avanzado la IA en los dramas!' },
-                    { user: 'Ana_SciFi', text: 'Necesito el episodio 2 urgentemente!!' }
-                ],
-                createdAt: Date.now() - 3600000
+                createdAt: Date.now() - 50000
             },
             {
-                id: 'drama-2',
-                title: 'Reino de Cristal (Prólogo)',
-                description: 'La princesa de un imperio flotante generado por algoritmos debe elegir entre su corona y un amor prohibido en otra dimensión. 💎👑 #FantasyAI',
+                id: 'default-2',
+                title: 'Reino de Cristal',
+                category: 'Fantasía',
+                description: 'La princesa de un imperio flotante generado por algoritmos busca su libertad.',
                 videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-futuristic-city-with-flying-cars-animation-41555-large.mp4',
                 coverUrl: 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=1000&auto=format&fit=crop',
-                likes: 852,
-                liked: false,
-                comments: [
-                    { user: 'DramaLover', text: 'Los visuales son de otro planeta.' }
-                ],
-                createdAt: Date.now() - 7200000
+                createdAt: Date.now() - 40000
+            },
+            {
+                id: 'default-3',
+                title: 'Amor en Código Binario',
+                category: 'Romance',
+                description: 'Dos inteligencias artificiales experimentan el amor humano en una red neuronal aislada.',
+                videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-animation-of-futuristic-devices-31936-large.mp4',
+                coverUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?q=80&w=1000&auto=format&fit=crop',
+                createdAt: Date.now() - 30000
             }
         ];
 
-        class AIDramaApp {
+        class NetflixDramaApp {
             constructor() {
                 this.dramas = [];
-                this.currentVideoIndex = 0;
-                this.videoInputMode = 'file';
-                this.activeCommentsDramaId = null;
-                this.initStorage();
-                this.initListeners();
+                this.favorites = JSON.parse(localStorage.getItem('netflix_ai_favs') || '[]');
+                this.currentCategory = 'all';
+                this.activeDramaId = null;
+                this.currentUser = null;
+                
+                this.initAuthListener();
+                this.fetchDramasFromFirestore();
             }
 
-            initStorage() {
-                const stored = localStorage.getItem('ai_dramas_server');
-                if (stored) {
-                    try {
-                        this.dramas = JSON.parse(stored);
-                    } catch(e) {
-                        this.dramas = defaultDramas;
+            initAuthListener() {
+                onAuthStateChanged(auth, (user) => {
+                    this.currentUser = user;
+                });
+            }
+
+            async fetchDramasFromFirestore() {
+                try {
+                    const querySnapshot = await getDocs(collection(db, "ai_dramas"));
+                    if (querySnapshot.empty) {
+                        // Populate seed data
+                        for (const drama of defaultSeedDramas) {
+                            await addDoc(collection(db, "ai_dramas"), drama);
+                        }
+                        this.fetchDramasFromFirestore();
+                        return;
                     }
-                } else {
-                    this.dramas = defaultDramas;
-                    this.saveDramas();
+                    this.dramas = [];
+                    querySnapshot.forEach((docSnap) => {
+                        this.dramas.push({ id: docSnap.id, ...docSnap.data() });
+                    });
+                    this.renderAll();
+                } catch (error) {
+                    console.error("Error fetching Firestore:", error);
+                    // Fallback to local seeds if network fails
+                    this.dramas = defaultSeedDramas;
+                    this.renderAll();
                 }
-                this.render();
-            }
-
-            saveDramas() {
-                localStorage.setItem('ai_dramas_server', JSON.stringify(this.dramas));
-                const badge = document.getElementById('storageCountBadge');
-                if(badge) badge.innerText = `${this.dramas.length} dramas`;
-            }
-
-            initListeners() {
-                // Intersection Observer to auto-play active vertical reel
-                const container = document.getElementById('reelsContainer');
-                container.addEventListener('scroll', () => {
-                    // debounce or throttle check active video
-                }, { passive: true });
             }
 
             showToast(msg) {
                 const toast = document.getElementById('toast');
                 document.getElementById('toastMsg').innerText = msg;
                 toast.classList.remove('opacity-0');
-                setTimeout(() => {
-                    toast.classList.add('opacity-0');
-                }, 2500);
+                setTimeout(() => toast.classList.add('opacity-0'), 2500);
             }
 
-            setVideoInputMode(mode) {
-                this.videoInputMode = mode;
-                const fileContainer = document.getElementById('videoFileContainer');
-                const urlContainer = document.getElementById('videoUrlContainer');
-                const tabFile = document.getElementById('tabVideoFile');
-                const tabUrl = document.getElementById('tabVideoUrl');
+            switchTab(tab) {
+                const homeView = document.getElementById('homeView');
+                const searchView = document.getElementById('searchView');
+                const favoritesView = document.getElementById('favoritesView');
 
-                if(mode === 'file') {
-                    fileContainer.classList.remove('hidden');
-                    urlContainer.classList.add('hidden');
-                    tabFile.className = "py-2 bg-brand-600 text-white text-xs font-medium rounded-xl transition";
-                    tabUrl.className = "py-2 bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs font-medium rounded-xl transition";
-                } else {
-                    fileContainer.classList.add('hidden');
-                    urlContainer.classList.remove('hidden');
-                    tabUrl.className = "py-2 bg-brand-600 text-white text-xs font-medium rounded-xl transition";
-                    tabFile.className = "py-2 bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs font-medium rounded-xl transition";
+                const navHome = document.getElementById('navHome');
+                const navSearch = document.getElementById('navSearch');
+                const navFav = document.getElementById('navFav');
+
+                [homeView, searchView, favoritesView].forEach(v => v.classList.add('hidden'));
+                [navHome, navSearch, navFav].forEach(n => n.classList.remove('text-white'));
+                [navHome, navSearch, navFav].forEach(n => n.classList.add('text-zinc-400'));
+
+                if (tab === 'home') {
+                    homeView.classList.remove('hidden');
+                    navHome.classList.add('text-white');
+                } else if (tab === 'search') {
+                    searchView.classList.remove('hidden');
+                    navSearch.classList.add('text-white');
+                    document.getElementById('searchInput').focus();
+                } else if (tab === 'favorites') {
+                    favoritesView.classList.remove('hidden');
+                    navFav.classList.add('text-white');
+                    this.renderFavorites();
                 }
             }
 
-            openStudio() {
-                const modal = document.getElementById('studioModal');
-                modal.classList.remove('translate-y-full');
-                this.renderManageList();
-            }
-
-            closeStudio() {
-                const modal = document.getElementById('studioModal');
-                modal.classList.add('translate-y-full');
-                this.render();
-            }
-
-            async handleFormSubmit(e) {
-                e.preventDefault();
-                const title = document.getElementById('dramaTitle').value.trim();
-                const description = document.getElementById('dramaDesc').value.trim();
-                let coverUrl = document.getElementById('dramaCoverUrl').value.trim();
-                let videoUrl = '';
-
-                const submitBtn = document.getElementById('submitBtn');
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Procesando archivo...</span>`;
-
-                if (this.videoInputMode === 'url') {
-                    videoUrl = document.getElementById('dramaVideoUrl').value.trim();
-                    this.finalizeAddDrama(title, description, videoUrl, coverUrl);
-                } else {
-                    const fileInput = document.getElementById('dramaVideoFile');
-                    if (fileInput.files && fileInput.files[0]) {
-                        const file = fileInput.files[0];
-                        const reader = new FileReader();
-                        reader.onload = (uploadEvent) => {
-                            videoUrl = uploadEvent.target.result; // Base64 Data URL for local storage streaming
-                            this.finalizeAddDrama(title, description, videoUrl, coverUrl);
-                        };
-                        reader.readAsDataURL(file);
+            filterCategory(cat) {
+                this.currentCategory = cat;
+                document.querySelectorAll('.category-chip').forEach(btn => {
+                    if (btn.innerText.includes(cat) || (cat === 'all' && btn.innerText === 'Todos')) {
+                        btn.className = "category-chip px-3.5 py-1.5 rounded-full bg-white text-black text-xs font-semibold whitespace-nowrap transition";
                     } else {
-                        // Fallback sample video if none selected
-                        videoUrl = 'https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-with-code-31938-large.mp4';
-                        this.finalizeAddDrama(title, description, videoUrl, coverUrl);
+                        btn.className = "category-chip px-3.5 py-1.5 rounded-full bg-zinc-800 text-zinc-300 text-xs font-semibold whitespace-nowrap transition";
                     }
+                });
+                this.renderCatalog();
+            }
+
+            handleSearch(query) {
+                const grid = document.getElementById('searchResultsGrid');
+                const q = query.toLowerCase().trim();
+                if (!q) {
+                    grid.innerHTML = `<p class="col-span-3 text-center text-xs text-zinc-500 py-10">Escribe algo para buscar dramas...</p>`;
+                    return;
+                }
+
+                const results = this.dramas.filter(d => d.title.toLowerCase().includes(q) || d.description.toLowerCase().includes(q) || d.category.toLowerCase().includes(q));
+                if (results.length === 0) {
+                    grid.innerHTML = `<p class="col-span-3 text-center text-xs text-zinc-500 py-10">No se encontraron dramas.</p>`;
+                    return;
+                }
+
+                grid.innerHTML = results.map(d => `
+                    <div onclick="appController.openPlayer('${d.id}')" class="relative rounded-xl overflow-hidden aspect-[9/16] bg-zinc-900 border border-zinc-800 cursor-pointer group active:scale-95 transition">
+                        <img src="${d.coverUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://placehold.co/300x533/18181b/71717a?text=AI+Drama'">
+                        <div class="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black via-black/60 to-transparent">
+                            <h4 class="text-[11px] font-bold text-white truncate">${d.title}</h4>
+                            <span class="text-[9px] text-zinc-400">${d.category}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            renderAll() {
+                this.renderHero();
+                this.renderCatalog();
+            }
+
+            renderHero() {
+                if (this.dramas.length === 0) return;
+                const hero = this.dramas[0];
+                document.getElementById('heroTitle').innerText = hero.title;
+                document.getElementById('heroDesc').innerText = hero.description;
+                document.getElementById('heroCategory').innerText = hero.category;
+                document.getElementById('heroCover').src = hero.coverUrl;
+
+                document.getElementById('heroPlayBtn').onclick = () => this.openPlayer(hero.id);
+                document.getElementById('heroInfoBtn').onclick = () => this.openPlayer(hero.id);
+            }
+
+            renderCatalog() {
+                const grid = document.getElementById('catalogGrid');
+                const filtered = this.currentCategory === 'all' 
+                    ? this.dramas 
+                    : this.dramas.filter(d => d.category === this.currentCategory);
+
+                if (filtered.length === 0) {
+                    grid.innerHTML = `<p class="col-span-3 text-center text-xs text-zinc-500 py-8">No hay dramas en esta categoría.</p>`;
+                    return;
+                }
+
+                grid.innerHTML = filtered.map(d => `
+                    <div onclick="appController.openPlayer('${d.id}')" class="relative rounded-xl overflow-hidden aspect-[9/16] bg-zinc-900 border border-zinc-800 cursor-pointer group active:scale-95 transition shadow-lg">
+                        <img src="${d.coverUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://placehold.co/300x533/18181b/71717a?text=AI'">
+                        <div class="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded text-[8px] font-bold text-white">9:16</div>
+                        <div class="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black via-black/70 to-transparent">
+                            <h4 class="text-[11px] font-bold text-white truncate">${d.title}</h4>
+                            <span class="text-[9px] text-zinc-400">${d.category}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            renderFavorites() {
+                const grid = document.getElementById('favoritesGrid');
+                const favDramas = this.dramas.filter(d => this.favorites.includes(d.id));
+
+                if (favDramas.length === 0) {
+                    grid.innerHTML = `<p class="col-span-3 text-center text-xs text-zinc-500 py-10">Aún no has agregado ningún drama a tu lista.</p>`;
+                    return;
+                }
+
+                grid.innerHTML = favDramas.map(d => `
+                    <div onclick="appController.openPlayer('${d.id}')" class="relative rounded-xl overflow-hidden aspect-[9/16] bg-zinc-900 border border-zinc-800 cursor-pointer group active:scale-95 transition">
+                        <img src="${d.coverUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <div class="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black via-black/60 to-transparent">
+                            <h4 class="text-[11px] font-bold text-white truncate">${d.title}</h4>
+                            <span class="text-[9px] text-zinc-400">${d.category}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            openPlayer(id) {
+                const drama = this.dramas.find(d => d.id === id);
+                if (!drama) return;
+                this.activeDramaId = id;
+
+                document.getElementById('playerModalTitle').innerText = drama.title;
+                document.getElementById('playerModalDesc').innerText = drama.description;
+                document.getElementById('playerCategoryBadge').innerText = drama.category;
+
+                const video = document.getElementById('streamVideo');
+                video.src = drama.videoUrl;
+                video.play().catch(() => {
+                    video.muted = true;
+                    video.play();
+                });
+
+                this.updatePlayerFavIcon();
+
+                const modal = document.getElementById('playerModal');
+                modal.classList.remove('translate-y-full');
+            }
+
+            closePlayer() {
+                const modal = document.getElementById('playerModal');
+                modal.classList.add('translate-y-full');
+                const video = document.getElementById('streamVideo');
+                video.pause();
+                video.currentTime = 0;
+                this.activeDramaId = null;
+            }
+
+            togglePlayPause() {
+                const video = document.getElementById('streamVideo');
+                const overlay = document.getElementById('playerPlayOverlay');
+                if (video.paused) {
+                    video.play();
+                    overlay.innerHTML = `<div class="w-16 h-16 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center text-xl"><i class="fa-solid fa-play"></i></div>`;
+                } else {
+                    video.pause();
+                    overlay.innerHTML = `<div class="w-16 h-16 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center text-xl"><i class="fa-solid fa-pause"></i></div>`;
+                }
+                overlay.classList.remove('opacity-0');
+                setTimeout(() => overlay.classList.add('opacity-0'), 500);
+            }
+
+            togglePlayerFavorite() {
+                if (!this.activeDramaId) return;
+                const index = this.favorites.indexOf(this.activeDramaId);
+                if (index > -1) {
+                    this.favorites.splice(index, 1);
+                    this.showToast('Eliminado de tu lista');
+                } else {
+                    this.favorites.push(this.activeDramaId);
+                    this.showToast('Agregado a tu lista');
+                }
+                localStorage.setItem('netflix_ai_favs', JSON.stringify(this.favorites));
+                this.updatePlayerFavIcon();
+            }
+
+            updatePlayerFavIcon() {
+                const btn = document.getElementById('playerFavBtn');
+                const isFav = this.favorites.includes(this.activeDramaId);
+                btn.innerHTML = `<i class="fa-${isFav ? 'solid' : 'regular'} fa-heart text-xs ${isFav ? 'text-netflix-red' : ''}"></i>`;
+            }
+
+            openAdminAuthModal() {
+                if (this.currentUser) {
+                    this.openAdminPanel();
+                } else {
+                    document.getElementById('adminAuthModal').classList.remove('translate-y-full');
                 }
             }
 
-            finalizeAddDrama(title, description, videoUrl, coverUrl) {
-                if(!coverUrl) {
-                    coverUrl = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop';
+            closeAdminAuthModal() {
+                document.getElementById('adminAuthModal').classList.add('translate-y-full');
+            }
+
+            async handleAdminLogin(e) {
+                e.preventDefault();
+                const email = document.getElementById('adminEmail').value.trim();
+                const password = document.getElementById('adminPassword').value.trim();
+                const btn = document.getElementById('loginBtn');
+                
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Autenticando...`;
+
+                try {
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    this.currentUser = userCredential.user;
+                    this.closeAdminAuthModal();
+                    this.openAdminPanel();
+                    this.showToast('¡Bienvenido Administrador!');
+                } catch (error) {
+                    console.error("Auth error:", error);
+                    this.showToast('Credenciales incorrectas o error en Firebase Auth');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = `Iniciar Sesión Segura`;
                 }
-
-                const newDrama = {
-                    id: 'drama-' + Date.now(),
-                    title,
-                    description,
-                    videoUrl,
-                    coverUrl,
-                    likes: Math.floor(Math.random() * 100),
-                    liked: false,
-                    comments: [{ user: 'IA_Director', text: '¡Drama publicado exitosamente en el servidor local!' }],
-                    createdAt: Date.now()
-                };
-
-                this.dramas.unshift(newDrama);
-                this.saveDramas();
-
-                document.getElementById('dramaForm').reset();
-                const submitBtn = document.getElementById('submitBtn');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i><span>Guardar y Transmitir en Servidor</span>`;
-
-                this.showToast('¡Drama agregado al servidor local!');
-                this.closeStudio();
             }
 
-            deleteDrama(id) {
-                this.dramas = this.dramas.filter(d => d.id !== id);
-                this.saveDramas();
-                this.renderManageList();
-                this.showToast('Drama eliminado del servidor');
+            adminLogout() {
+                signOut(auth).then(() => {
+                    this.currentUser = null;
+                    this.closeAdminPanel();
+                    this.showToast('Sesión de administrador cerrada');
+                });
             }
 
-            renderManageList() {
-                const list = document.getElementById('serverDramasManageList');
+            openAdminPanel() {
+                document.getElementById('adminPanelModal').classList.remove('translate-y-full');
+                this.renderAdminManageList();
+            }
+
+            closeAdminPanel() {
+                document.getElementById('adminPanelModal').classList.add('translate-y-full');
+                this.fetchDramasFromFirestore();
+            }
+
+            async handleSaveDrama(e) {
+                e.preventDefault();
+                const title = document.getElementById('newTitle').value.trim();
+                const category = document.getElementById('newCategory').value;
+                const description = document.getElementById('newDesc').value.trim();
+                const videoUrl = document.getElementById('newVideoUrl').value.trim();
+                const coverUrl = document.getElementById('newCoverUrl').value.trim();
+
+                const btn = document.getElementById('saveDramaBtn');
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Guardando en Firestore...`;
+
+                try {
+                    await addDoc(collection(db, "ai_dramas"), {
+                        title, category, description, videoUrl, coverUrl, createdAt: Date.now()
+                    });
+                    document.getElementById('dramaUploadForm').reset();
+                    this.showToast('¡Drama publicado con éxito en Firebase!');
+                    this.renderAdminManageList();
+                } catch (err) {
+                    console.error(err);
+                    this.showToast('Error al guardar en Firestore');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = `Guardar en Firebase Firestore`;
+                }
+            }
+
+            async deleteDrama(id) {
+                if (!confirm("¿Estás seguro de eliminar este drama?")) return;
+                try {
+                    await deleteDoc(doc(db, "ai_dramas", id));
+                    this.showToast('Drama eliminado de Firebase');
+                    this.renderAdminManageList();
+                } catch (err) {
+                    console.error(err);
+                    this.showToast('Error al eliminar');
+                }
+            }
+
+            renderAdminManageList() {
+                const list = document.getElementById('adminDramasManageList');
                 if (this.dramas.length === 0) {
                     list.innerHTML = `<p class="text-xs text-zinc-500 text-center py-4">No hay dramas registrados.</p>`;
                     return;
@@ -376,239 +683,22 @@
                 list.innerHTML = this.dramas.map(d => `
                     <div class="flex items-center justify-between bg-zinc-900 border border-zinc-800 p-2.5 rounded-xl">
                         <div class="flex items-center space-x-3 truncate">
-                            <img src="${d.coverUrl}" class="w-10 h-14 object-cover rounded-lg flex-shrink-0" onerror="this.src='https://placehold.co/100x150/18181b/71717a?text=AI'">
+                            <img src="${d.coverUrl}" class="w-9 h-14 object-cover rounded-lg flex-shrink-0" onerror="this.src='https://placehold.co/100x150/18181b/71717a?text=AI'">
                             <div class="truncate">
                                 <h4 class="text-xs font-bold text-white truncate">${d.title}</h4>
-                                <p class="text-[10px] text-zinc-400 truncate">${d.description}</p>
+                                <span class="text-[10px] text-zinc-400">${d.category}</span>
                             </div>
                         </div>
-                        <button onclick="appState.deleteDrama('${d.id}')" class="text-zinc-500 hover:text-red-400 p-2 transition">
+                        <button onclick="appController.deleteDrama('${d.id}')" class="text-zinc-500 hover:text-red-400 p-2 transition">
                             <i class="fa-solid fa-trash-can text-xs"></i>
                         </button>
                     </div>
                 `).join('');
             }
-
-            toggleLike(id) {
-                const drama = this.dramas.find(d => d.id === id);
-                if(drama) {
-                    drama.liked = !drama.liked;
-                    drama.likes += drama.liked ? 1 : -1;
-                    this.saveDramas();
-                    this.renderReelsOnly();
-                }
-            }
-
-            openComments(id) {
-                this.activeCommentsDramaId = id;
-                const modal = document.getElementById('commentsModal');
-                modal.classList.remove('translate-y-full');
-                this.renderCommentsList();
-            }
-
-            closeComments() {
-                const modal = document.getElementById('commentsModal');
-                modal.classList.add('translate-y-full');
-                this.activeCommentsDramaId = null;
-            }
-
-            renderCommentsList() {
-                const drama = this.dramas.find(d => d.id === this.activeCommentsDramaId);
-                const list = document.getElementById('commentsList');
-                if (!drama) return;
-
-                if (drama.comments.length === 0) {
-                    list.innerHTML = `<p class="text-center text-zinc-500 py-4">Sé el primero en comentar este drama.</p>`;
-                    return;
-                }
-
-                list.innerHTML = drama.comments.map(c => `
-                    <div class="flex items-start space-x-2">
-                        <div class="w-7 h-7 rounded-full bg-brand-600/30 text-brand-400 font-bold flex items-center justify-center text-xs flex-shrink-0">
-                            ${c.user.charAt(0).toUpperCase()}
-                        </div>
-                        <div class="flex-1 bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
-                            <span class="font-semibold text-zinc-300 block text-[11px]">${c.user}</span>
-                            <span class="text-zinc-400">${c.text}</span>
-                        </div>
-                    </div>
-                `).join('');
-            }
-
-            postComment() {
-                const input = document.getElementById('commentInput');
-                const text = input.value.trim();
-                if (!text || !this.activeCommentsDramaId) return;
-
-                const drama = this.dramas.find(d => d.id === this.activeCommentsDramaId);
-                if (drama) {
-                    drama.comments.push({ user: 'Tú (Espectador)', text });
-                    this.saveDramas();
-                    input.value = '';
-                    this.renderCommentsList();
-                    this.showToast('Comentario publicado');
-                }
-            }
-
-            shareDrama(title) {
-                if (navigator.share) {
-                    navigator.share({ title: 'AI Drama', text: `¡Mira este drama IA: ${title}!`, url: window.location.href }).catch(() => {});
-                } else {
-                    // Fallback copy clipboard
-                    const dummy = document.createElement('input');
-                    document.body.appendChild(dummy);
-                    dummy.value = window.location.href;
-                    dummy.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(dummy);
-                    this.showToast('Enlace copiado al portapapeles');
-                }
-            }
-
-            render() {
-                const container = document.getElementById('reelsContainer');
-                const emptyState = document.getElementById('emptyState');
-
-                if (this.dramas.length === 0) {
-                    emptyState.classList.remove('hidden');
-                    container.innerHTML = '';
-                    return;
-                } else {
-                    emptyState.classList.add('hidden');
-                }
-
-                container.innerHTML = this.dramas.map((drama, index) => `
-                    <div class="relative w-full h-full flex-shrink-0 snap-start flex flex-col justify-end bg-black overflow-hidden group" id="reel-${drama.id}">
-                        <!-- Video Player (9:16 aspect fit) -->
-                        <video 
-                            id="video-${drama.id}"
-                            src="${drama.videoUrl}" 
-                            poster="${drama.coverUrl}"
-                            class="absolute inset-0 w-full h-full object-cover cursor-pointer"
-                            loop 
-                            playsinline 
-                            webkit-playsinline
-                            onclick="appState.togglePlay('${drama.id}')">
-                        </video>
-
-                        <!-- Play/Pause Indicator Overlay -->
-                        <div id="playPauseOverlay-${drama.id}" class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300">
-                            <div class="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm text-white flex items-center justify-center text-2xl shadow-2xl">
-                                <i class="fa-solid fa-play"></i>
-                            </div>
-                        </div>
-
-                        <!-- Gradient Overlays for Readability -->
-                        <div class="absolute inset-x-0 bottom-0 h-96 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none"></div>
-
-                        <!-- Right Action Bar (Reels style) -->
-                        <div class="absolute right-3 bottom-24 z-20 flex flex-col items-center space-y-5">
-                            <button onclick="appState.toggleLike('${drama.id}')" class="flex flex-col items-center space-y-1 group/btn active:scale-90 transition">
-                                <div class="w-12 h-12 rounded-full bg-zinc-900/80 backdrop-blur-md border border-zinc-700/50 flex items-center justify-center text-xl shadow-lg ${drama.liked ? 'text-rose-500 bg-rose-500/10 border-rose-500/30' : 'text-white'}">
-                                    <i class="fa-${drama.liked ? 'solid' : 'regular'} fa-heart"></i>
-                                </div>
-                                <span class="text-[11px] font-semibold text-white drop-shadow">${drama.likes}</span>
-                            </button>
-
-                            <button onclick="appState.openComments('${drama.id}')" class="flex flex-col items-center space-y-1 active:scale-90 transition">
-                                <div class="w-12 h-12 rounded-full bg-zinc-900/80 backdrop-blur-md border border-zinc-700/50 flex items-center justify-center text-white text-lg shadow-lg">
-                                    <i class="fa-solid fa-comment-dots"></i>
-                                </div>
-                                <span class="text-[11px] font-semibold text-white drop-shadow">${drama.comments.length}</span>
-                            </button>
-
-                            <button onclick="appState.shareDrama('${drama.title}')" class="flex flex-col items-center space-y-1 active:scale-90 transition">
-                                <div class="w-12 h-12 rounded-full bg-zinc-900/80 backdrop-blur-md border border-zinc-700/50 flex items-center justify-center text-white text-lg shadow-lg">
-                                    <i class="fa-solid fa-share"></i>
-                                </div>
-                                <span class="text-[11px] font-semibold text-white drop-shadow">Compartir</span>
-                            </button>
-                        </div>
-
-                        <!-- Bottom Content Details -->
-                        <div class="relative z-20 p-5 pb-20 max-w-[80%]">
-                            <div class="flex items-center space-x-2 mb-2">
-                                <span class="px-2.5 py-0.5 rounded-full bg-brand-600/80 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider border border-brand-500/40">Drama IA 9:16</span>
-                                <span class="text-[11px] text-zinc-300 font-medium">Servidor Local</span>
-                            </div>
-                            <h2 class="text-base font-bold text-white mb-1.5 drop-shadow-md">${drama.title}</h2>
-                            <p class="text-xs text-zinc-300 line-clamp-2 drop-shadow leading-relaxed">${drama.description}</p>
-                        </div>
-                    </div>
-                `).join('');
-
-                this.setupIntersectionObserver();
-            }
-
-            renderReelsOnly() {
-                // Quick update of likes counters without rebuilding DOM
-                this.dramas.forEach(drama => {
-                    const reel = document.getElementById(`reel-${drama.id}`);
-                    if(reel) {
-                        // could update like button state if needed
-                    }
-                });
-            }
-
-            setupIntersectionObserver() {
-                const container = document.getElementById('reelsContainer');
-                const observerOptions = {
-                    root: container,
-                    threshold: 0.6
-                };
-
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        const videoId = entry.target.id.replace('reel-', '');
-                        const video = document.getElementById(`video-${videoId}`);
-                        if (!video) return;
-
-                        if (entry.isIntersecting) {
-                            video.play().catch(() => {
-                                // Handle autoplay restriction if muted needed
-                                video.muted = true;
-                                video.play();
-                            });
-                        } else {
-                            video.pause();
-                            video.currentTime = 0;
-                        }
-                    });
-                }, observerOptions);
-
-                document.querySelectorAll('[id^="reel-"]').forEach(el => observer.observe(el));
-            }
-
-            togglePlay(id) {
-                const video = document.getElementById(`video-${id}`);
-                const overlay = document.getElementById(`playPauseOverlay-${id}`);
-                if (!video) return;
-
-                if (video.paused) {
-                    video.play();
-                    overlay.innerHTML = `<div class="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm text-white flex items-center justify-center text-2xl shadow-2xl"><i class="fa-solid fa-play"></i></div>`;
-                } else {
-                    video.pause();
-                    overlay.innerHTML = `<div class="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm text-white flex items-center justify-center text-2xl shadow-2xl"><i class="fa-solid fa-pause"></i></div>`;
-                }
-
-                overlay.classList.remove('opacity-0');
-                setTimeout(() => {
-                    overlay.classList.add('opacity-0');
-                }, 500);
-            }
-
-            filterFavorites() {
-                this.showToast('Mostrando tus favoritos guardados');
-            }
-            filterFeed() {
-                // Reset scroll to top
-                document.getElementById('reelsContainer').scrollTo({ top: 0, behavior: 'smooth' });
-            }
         }
 
-        // Initialize App Global Instance
-        const appState = new AIDramaApp();
+        // Global Controller Instance
+        const appController = new NetflixDramaApp();
     </script>
 </body>
 </html>
