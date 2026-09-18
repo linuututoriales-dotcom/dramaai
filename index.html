@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Drama Reels Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { 500: '#8b5cf6', 600: '#7c3aed', dark: '#09090b' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #09090b;
+            color: #f4f4f5;
+            overscroll-behavior-y: none;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .snap-y-mandatory { scroll-snap-type: y mandatory; }
+        .snap-start { scroll-snap-align: start; }
+        video::-webkit-media-controls { display: none !important; }
+    </style>
+</head>
+<body class="h-full overflow-hidden flex flex-col justify-between select-none">
+
+    <div id="app" class="relative w-full h-full max-w-md mx-auto bg-black flex flex-col shadow-2xl overflow-hidden sm:border-x sm:border-zinc-800">
+
+        <!-- TOP BAR / HEADER -->
+        <header class="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-auto">
+            <div class="flex items-center space-x-2">
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" id="serverStatusIndicator"></span>
+                <span class="text-xs font-semibold tracking-wider uppercase text-zinc-300" id="serverStatusText">Servidor Local Activo</span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="appState.openStudio()" class="bg-brand-600 hover:bg-brand-500 text-white px-3 py-1.5 rounded-full text-xs font-medium shadow-lg flex items-center space-x-1.5 transition active:scale-95">
+                    <i class="fa-solid fa-server"></i>
+                    <span>Crear / Servidor</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- REELS VERTICAL CONTAINER (9:16) -->
+        <main id="reelsContainer" class="relative w-full h-full overflow-y-scroll snap-y-mandatory no-scrollbar flex flex-col">
+            <!-- Dynamic reels injected here -->
+        </main>
+
+        <!-- EMPTY STATE (Shown if no dramas exist) -->
+        <div id="emptyState" class="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 text-center bg-zinc-950 hidden">
+            <div class="w-16 h-16 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-brand-500 text-2xl mb-4 shadow-inner">
+                <i class="fa-solid fa-clapperboard"></i>
+            </div>
+            <h2 class="text-xl font-bold mb-2">No hay dramas IA disponibles</h2>
+            <p class="text-sm text-zinc-400 mb-6 max-w-xs">Configura tu servidor local subiendo videos generados por IA con su portada y descripción.</p>
+            <button onclick="appState.openStudio()" class="bg-brand-600 text-white font-medium px-6 py-3 rounded-full text-sm shadow-xl hover:bg-brand-500 transition active:scale-95">
+                Agregar mi primer drama
+            </button>
+        </div>
+
+        <!-- BOTTOM NAVIGATION BAR -->
+        <nav class="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black via-black/80 to-transparent pb-6 pt-4 px-6 flex justify-around items-center text-zinc-400 border-t border-zinc-900/40">
+            <button onclick="appState.filterFeed('all')" class="flex flex-col items-center space-y-1 text-brand-500 transition" id="navHomeBtn">
+                <i class="fa-solid fa-house text-lg"></i>
+                <span class="text-[10px] font-medium">Inicio</span>
+            </button>
+            <button onclick="appState.openStudio()" class="flex flex-col items-center space-y-1 hover:text-white transition">
+                <i class="fa-solid fa-plus-circle text-lg text-brand-500"></i>
+                <span class="text-[10px] font-medium">Subir</span>
+            </button>
+            <button onclick="appState.openFavorites()" class="flex flex-col items-center space-y-1 hover:text-white transition" id="navFavBtn">
+                <i class="fa-solid fa-heart text-lg"></i>
+                <span class="text-[10px] font-medium">Favoritos</span>
+            </button>
+        </nav>
+
+        <!-- STUDIO / SERVER MANAGEMENT MODAL -->
+        <div id="studioModal" class="absolute inset-0 z-50 bg-zinc-950/95 backdrop-blur-md flex flex-col transform translate-y-full transition-transform duration-300 ease-out overflow-hidden">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/50">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-server text-brand-500"></i>
+                    <h2 class="font-bold text-base">Panel Servidor & Gestor IA</h2>
+                </div>
+                <button onclick="appState.closeStudio()" class="w-8 h-8 rounded-full bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-5 space-y-6">
+                <!-- SERVER NODE INFO -->
+                <div class="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-4 shadow-lg">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Nodo Local (Browser Storage)</span>
+                        <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold rounded-full border border-emerald-500/20">Online</span>
+                    </div>
+                    <p class="text-xs text-zinc-400 mb-3">Tus dramas se almacenan de forma local en este navegador simulando un servidor de streaming en red local.</p>
+                    <div class="flex items-center justify-between bg-black/40 px-3 py-2 rounded-xl text-xs font-mono text-zinc-300 border border-zinc-800">
+                        <span class="truncate">http://127.0.0.1:8080/ai-dramas</span>
+                        <span id="storageCountBadge" class="bg-brand-600 text-white px-2 py-0.5 rounded-full text-[10px]">0 dramas</span>
+                    </div>
+                </div>
+
+                <!-- ADD DRAMA FORM -->
+                <form id="dramaForm" onsubmit="appState.handleFormSubmit(event)" class="space-y-4">
+                    <h3 class="text-sm font-bold text-zinc-200 flex items-center space-x-2">
+                        <i class="fa-solid fa-circle-plus text-brand-500"></i>
+                        <span>Publicar Nuevo Drama IA</span>
+                    </h3>
+
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">Título del Drama</label>
+                        <input type="text" id="dramaTitle" required placeholder="Ej. Crónicas del Futuro Ep. 1" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">Descripción / Sinopsis</label>
+                        <textarea id="dramaDesc" rows="2" required placeholder="Describe la trama generada por IA..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition resize-none"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">Archivo de Video (Local o Enlace MP4/WebM)</label>
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <button type="button" id="tabVideoFile" onclick="appState.setVideoInputMode('file')" class="py-2 bg-brand-600 text-white text-xs font-medium rounded-xl transition">Subir Archivo</button>
+                            <button type="button" id="tabVideoUrl" onclick="appState.setVideoInputMode('url')" class="py-2 bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs font-medium rounded-xl transition">Enlace URL</button>
+                        </div>
+                        <div id="videoFileContainer">
+                            <input type="file" id="dramaVideoFile" accept="video/*" class="w-full text-xs text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700 cursor-pointer">
+                        </div>
+                        <div id="videoUrlContainer" class="hidden">
+                            <input type="url" id="dramaVideoUrl" placeholder="https://ejemplo.com/video.mp4" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-400 mb-1">Imagen de Portada (Miniatura 9:16)</label>
+                        <input type="url" id="dramaCoverUrl" placeholder="https://images.unsplash.com/... (opcional)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition">
+                        <p class="text-[10px] text-zinc-500 mt-1">Si dejas vacío, se extraerá el primer fotograma del video automáticamente.</p>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="w-full py-3 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-semibold rounded-xl text-sm shadow-lg transition active:scale-95 flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Guardar y Transmitir en Servidor</span>
+                    </button>
+                </form>
+
+                <!-- MANAGEMENT LIST -->
+                <div class="space-y-3 pt-4 border-t border-zinc-800/80">
+                    <h3 class="text-sm font-bold text-zinc-200">Dramas en Servidor Local</h3>
+                    <div id="serverDramasManageList" class="space-y-2">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMMENTS MODAL -->
+        <div id="commentsModal" class="absolute inset-x-0 bottom-0 z-40 bg-zinc-900 rounded-t-3xl border-t border-zinc-800 p-5 transform translate-y-full transition-transform duration-300 max-h-[60vh] flex flex-col">
+            <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
+                <h3 class="font-bold text-sm">Comentarios (IA & Usuarios)</h3>
+                <button onclick="appState.closeComments()" class="text-zinc-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div id="commentsList" class="flex-1 overflow-y-auto py-3 space-y-3 text-xs">
+                <!-- Comments injected -->
+            </div>
+            <div class="pt-3 border-t border-zinc-800 flex items-center space-x-2">
+                <input type="text" id="commentInput" placeholder="Escribe un comentario..." class="flex-1 bg-zinc-950 border border-zinc-800 rounded-full px-4 py-2 text-xs text-white focus:outline-none focus:border-brand-500">
+                <button onclick="appState.postComment()" class="w-9 h-9 rounded-full bg-brand-600 text-white flex items-center justify-center hover:bg-brand-500 transition"><i class="fa-solid fa-paper-plane text-xs"></i></button>
+            </div>
+        </div>
+
+        <!-- NOTIFICATION TOAST -->
+        <div id="toast" class="absolute top-16 left-1/2 transform -translate-x-1/2 z-50 bg-zinc-900 border border-zinc-700 text-white text-xs px-4 py-2 rounded-full shadow-2xl opacity-0 pointer-events-none transition-opacity duration-300 flex items-center space-x-2">
+            <i class="fa-solid fa-circle-check text-emerald-400"></i>
+            <span id="toastMsg">Acción realizada con éxito</span>
+        </div>
+
+    </div>
+
+    <script>
+        // Sample seed dramas for immediate amazing experience
+        const defaultDramas = [
+            {
+                id: 'drama-1',
+                title: 'El Último Androide Ep. 1',
+                description: 'En un Neo-Tokio gobernado por inteligencias artificiales renegadas, un detective cibernético descubre un secreto prohibido. 🤖✨ #AIDrama #Cyberpunk',
+                videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-with-code-31938-large.mp4',
+                coverUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop',
+                likes: 1240,
+                liked: false,
+                comments: [
+                    { user: 'CyberFan99', text: '¡Increíble cómo ha avanzado la IA en los dramas!' },
+                    { user: 'Ana_SciFi', text: 'Necesito el episodio 2 urgentemente!!' }
+                ],
+                createdAt: Date.now() - 3600000
+            },
+            {
+                id: 'drama-2',
+                title: 'Reino de Cristal (Prólogo)',
+                description: 'La princesa de un imperio flotante generado por algoritmos debe elegir entre su corona y un amor prohibido en otra dimensión. 💎👑 #FantasyAI',
+                videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-futuristic-city-with-flying-cars-animation-41555-large.mp4',
+                coverUrl: 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=1000&auto=format&fit=crop',
+                likes: 852,
+                liked: false,
+                comments: [
+                    { user: 'DramaLover', text: 'Los visuales son de otro planeta.' }
+                ],
+                createdAt: Date.now() - 7200000
+            }
+        ];
+
+        class AIDramaApp {
+            constructor() {
+                this.dramas = [];
+                this.currentVideoIndex = 0;
+                this.videoInputMode = 'file';
+                this.activeCommentsDramaId = null;
+                this.initStorage();
+                this.initListeners();
+            }
+
+            initStorage() {
+                const stored = localStorage.getItem('ai_dramas_server');
+                if (stored) {
+                    try {
+                        this.dramas = JSON.parse(stored);
+                    } catch(e) {
+                        this.dramas = defaultDramas;
+                    }
+                } else {
+                    this.dramas = defaultDramas;
+                    this.saveDramas();
+                }
+                this.render();
+            }
+
+            saveDramas() {
+                localStorage.setItem('ai_dramas_server', JSON.stringify(this.dramas));
+                const badge = document.getElementById('storageCountBadge');
+                if(badge) badge.innerText = `${this.dramas.length} dramas`;
+            }
+
+            initListeners() {
+                // Intersection Observer to auto-play active vertical reel
+                const container = document.getElementById('reelsContainer');
+                container.addEventListener('scroll', () => {
+                    // debounce or throttle check active video
+                }, { passive: true });
+            }
+
+            showToast(msg) {
+                const toast = document.getElementById('toast');
+                document.getElementById('toastMsg').innerText = msg;
+                toast.classList.remove('opacity-0');
+                setTimeout(() => {
+                    toast.classList.add('opacity-0');
+                }, 2500);
+            }
+
+            setVideoInputMode(mode) {
+                this.videoInputMode = mode;
+                const fileContainer = document.getElementById('videoFileContainer');
+                const urlContainer = document.getElementById('videoUrlContainer');
+                const tabFile = document.getElementById('tabVideoFile');
+                const tabUrl = document.getElementById('tabVideoUrl');
+
+                if(mode === 'file') {
+                    fileContainer.classList.remove('hidden');
+                    urlContainer.classList.add('hidden');
+                    tabFile.className = "py-2 bg-brand-600 text-white text-xs font-medium rounded-xl transition";
+                    tabUrl.className = "py-2 bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs font-medium rounded-xl transition";
+                } else {
+                    fileContainer.classList.add('hidden');
+                    urlContainer.classList.remove('hidden');
+                    tabUrl.className = "py-2 bg-brand-600 text-white text-xs font-medium rounded-xl transition";
+                    tabFile.className = "py-2 bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs font-medium rounded-xl transition";
+                }
+            }
+
+            openStudio() {
+                const modal = document.getElementById('studioModal');
+                modal.classList.remove('translate-y-full');
+                this.renderManageList();
+            }
+
+            closeStudio() {
+                const modal = document.getElementById('studioModal');
+                modal.classList.add('translate-y-full');
+                this.render();
+            }
+
+            async handleFormSubmit(e) {
+                e.preventDefault();
+                const title = document.getElementById('dramaTitle').value.trim();
+                const description = document.getElementById('dramaDesc').value.trim();
+                let coverUrl = document.getElementById('dramaCoverUrl').value.trim();
+                let videoUrl = '';
+
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Procesando archivo...</span>`;
+
+                if (this.videoInputMode === 'url') {
+                    videoUrl = document.getElementById('dramaVideoUrl').value.trim();
+                    this.finalizeAddDrama(title, description, videoUrl, coverUrl);
+                } else {
+                    const fileInput = document.getElementById('dramaVideoFile');
+                    if (fileInput.files && fileInput.files[0]) {
+                        const file = fileInput.files[0];
+                        const reader = new FileReader();
+                        reader.onload = (uploadEvent) => {
+                            videoUrl = uploadEvent.target.result; // Base64 Data URL for local storage streaming
+                            this.finalizeAddDrama(title, description, videoUrl, coverUrl);
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        // Fallback sample video if none selected
+                        videoUrl = 'https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-with-code-31938-large.mp4';
+                        this.finalizeAddDrama(title, description, videoUrl, coverUrl);
+                    }
+                }
+            }
+
+            finalizeAddDrama(title, description, videoUrl, coverUrl) {
+                if(!coverUrl) {
+                    coverUrl = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop';
+                }
+
+                const newDrama = {
+                    id: 'drama-' + Date.now(),
+                    title,
+                    description,
+                    videoUrl,
+                    coverUrl,
+                    likes: Math.floor(Math.random() * 100),
+                    liked: false,
+                    comments: [{ user: 'IA_Director', text: '¡Drama publicado exitosamente en el servidor local!' }],
+                    createdAt: Date.now()
+                };
+
+                this.dramas.unshift(newDrama);
+                this.saveDramas();
+
+                document.getElementById('dramaForm').reset();
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i><span>Guardar y Transmitir en Servidor</span>`;
+
+                this.showToast('¡Drama agregado al servidor local!');
+                this.closeStudio();
+            }
+
+            deleteDrama(id) {
+                this.dramas = this.dramas.filter(d => d.id !== id);
+                this.saveDramas();
+                this.renderManageList();
+                this.showToast('Drama eliminado del servidor');
+            }
+
+            renderManageList() {
+                const list = document.getElementById('serverDramasManageList');
+                if (this.dramas.length === 0) {
+                    list.innerHTML = `<p class="text-xs text-zinc-500 text-center py-4">No hay dramas registrados.</p>`;
+                    return;
+                }
+                list.innerHTML = this.dramas.map(d => `
+                    <div class="flex items-center justify-between bg-zinc-900 border border-zinc-800 p-2.5 rounded-xl">
+                        <div class="flex items-center space-x-3 truncate">
+                            <img src="${d.coverUrl}" class="w-10 h-14 object-cover rounded-lg flex-shrink-0" onerror="this.src='https://placehold.co/100x150/18181b/71717a?text=AI'">
+                            <div class="truncate">
+                                <h4 class="text-xs font-bold text-white truncate">${d.title}</h4>
+                                <p class="text-[10px] text-zinc-400 truncate">${d.description}</p>
+                            </div>
+                        </div>
+                        <button onclick="appState.deleteDrama('${d.id}')" class="text-zinc-500 hover:text-red-400 p-2 transition">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </div>
+                `).join('');
+            }
+
+            toggleLike(id) {
+                const drama = this.dramas.find(d => d.id === id);
+                if(drama) {
+                    drama.liked = !drama.liked;
+                    drama.likes += drama.liked ? 1 : -1;
+                    this.saveDramas();
+                    this.renderReelsOnly();
+                }
+            }
+
+            openComments(id) {
+                this.activeCommentsDramaId = id;
+                const modal = document.getElementById('commentsModal');
+                modal.classList.remove('translate-y-full');
+                this.renderCommentsList();
+            }
+
+            closeComments() {
+                const modal = document.getElementById('commentsModal');
+                modal.classList.add('translate-y-full');
+                this.activeCommentsDramaId = null;
+            }
+
+            renderCommentsList() {
+                const drama = this.dramas.find(d => d.id === this.activeCommentsDramaId);
+                const list = document.getElementById('commentsList');
+                if (!drama) return;
+
+                if (drama.comments.length === 0) {
+                    list.innerHTML = `<p class="text-center text-zinc-500 py-4">Sé el primero en comentar este drama.</p>`;
+                    return;
+                }
+
+                list.innerHTML = drama.comments.map(c => `
+                    <div class="flex items-start space-x-2">
+                        <div class="w-7 h-7 rounded-full bg-brand-600/30 text-brand-400 font-bold flex items-center justify-center text-xs flex-shrink-0">
+                            ${c.user.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="flex-1 bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
+                            <span class="font-semibold text-zinc-300 block text-[11px]">${c.user}</span>
+                            <span class="text-zinc-400">${c.text}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            postComment() {
+                const input = document.getElementById('commentInput');
+                const text = input.value.trim();
+                if (!text || !this.activeCommentsDramaId) return;
+
+                const drama = this.dramas.find(d => d.id === this.activeCommentsDramaId);
+                if (drama) {
+                    drama.comments.push({ user: 'Tú (Espectador)', text });
+                    this.saveDramas();
+                    input.value = '';
+                    this.renderCommentsList();
+                    this.showToast('Comentario publicado');
+                }
+            }
+
+            shareDrama(title) {
+                if (navigator.share) {
+                    navigator.share({ title: 'AI Drama', text: `¡Mira este drama IA: ${title}!`, url: window.location.href }).catch(() => {});
+                } else {
+                    // Fallback copy clipboard
+                    const dummy = document.createElement('input');
+                    document.body.appendChild(dummy);
+                    dummy.value = window.location.href;
+                    dummy.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(dummy);
+                    this.showToast('Enlace copiado al portapapeles');
+                }
+            }
+
+            render() {
+                const container = document.getElementById('reelsContainer');
+                const emptyState = document.getElementById('emptyState');
+
+                if (this.dramas.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    container.innerHTML = '';
+                    return;
+                } else {
+                    emptyState.classList.add('hidden');
+                }
+
+                container.innerHTML = this.dramas.map((drama, index) => `
+                    <div class="relative w-full h-full flex-shrink-0 snap-start flex flex-col justify-end bg-black overflow-hidden group" id="reel-${drama.id}">
+                        <!-- Video Player (9:16 aspect fit) -->
+                        <video 
+                            id="video-${drama.id}"
+                            src="${drama.videoUrl}" 
+                            poster="${drama.coverUrl}"
+                            class="absolute inset-0 w-full h-full object-cover cursor-pointer"
+                            loop 
+                            playsinline 
+                            webkit-playsinline
+                            onclick="appState.togglePlay('${drama.id}')">
+                        </video>
+
+                        <!-- Play/Pause Indicator Overlay -->
+                        <div id="playPauseOverlay-${drama.id}" class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300">
+                            <div class="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm text-white flex items-center justify-center text-2xl shadow-2xl">
+                                <i class="fa-solid fa-play"></i>
+                            </div>
+                        </div>
+
+                        <!-- Gradient Overlays for Readability -->
+                        <div class="absolute inset-x-0 bottom-0 h-96 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none"></div>
+
+                        <!-- Right Action Bar (Reels style) -->
+                        <div class="absolute right-3 bottom-24 z-20 flex flex-col items-center space-y-5">
+                            <button onclick="appState.toggleLike('${drama.id}')" class="flex flex-col items-center space-y-1 group/btn active:scale-90 transition">
+                                <div class="w-12 h-12 rounded-full bg-zinc-900/80 backdrop-blur-md border border-zinc-700/50 flex items-center justify-center text-xl shadow-lg ${drama.liked ? 'text-rose-500 bg-rose-500/10 border-rose-500/30' : 'text-white'}">
+                                    <i class="fa-${drama.liked ? 'solid' : 'regular'} fa-heart"></i>
+                                </div>
+                                <span class="text-[11px] font-semibold text-white drop-shadow">${drama.likes}</span>
+                            </button>
+
+                            <button onclick="appState.openComments('${drama.id}')" class="flex flex-col items-center space-y-1 active:scale-90 transition">
+                                <div class="w-12 h-12 rounded-full bg-zinc-900/80 backdrop-blur-md border border-zinc-700/50 flex items-center justify-center text-white text-lg shadow-lg">
+                                    <i class="fa-solid fa-comment-dots"></i>
+                                </div>
+                                <span class="text-[11px] font-semibold text-white drop-shadow">${drama.comments.length}</span>
+                            </button>
+
+                            <button onclick="appState.shareDrama('${drama.title}')" class="flex flex-col items-center space-y-1 active:scale-90 transition">
+                                <div class="w-12 h-12 rounded-full bg-zinc-900/80 backdrop-blur-md border border-zinc-700/50 flex items-center justify-center text-white text-lg shadow-lg">
+                                    <i class="fa-solid fa-share"></i>
+                                </div>
+                                <span class="text-[11px] font-semibold text-white drop-shadow">Compartir</span>
+                            </button>
+                        </div>
+
+                        <!-- Bottom Content Details -->
+                        <div class="relative z-20 p-5 pb-20 max-w-[80%]">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="px-2.5 py-0.5 rounded-full bg-brand-600/80 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider border border-brand-500/40">Drama IA 9:16</span>
+                                <span class="text-[11px] text-zinc-300 font-medium">Servidor Local</span>
+                            </div>
+                            <h2 class="text-base font-bold text-white mb-1.5 drop-shadow-md">${drama.title}</h2>
+                            <p class="text-xs text-zinc-300 line-clamp-2 drop-shadow leading-relaxed">${drama.description}</p>
+                        </div>
+                    </div>
+                `).join('');
+
+                this.setupIntersectionObserver();
+            }
+
+            renderReelsOnly() {
+                // Quick update of likes counters without rebuilding DOM
+                this.dramas.forEach(drama => {
+                    const reel = document.getElementById(`reel-${drama.id}`);
+                    if(reel) {
+                        // could update like button state if needed
+                    }
+                });
+            }
+
+            setupIntersectionObserver() {
+                const container = document.getElementById('reelsContainer');
+                const observerOptions = {
+                    root: container,
+                    threshold: 0.6
+                };
+
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        const videoId = entry.target.id.replace('reel-', '');
+                        const video = document.getElementById(`video-${videoId}`);
+                        if (!video) return;
+
+                        if (entry.isIntersecting) {
+                            video.play().catch(() => {
+                                // Handle autoplay restriction if muted needed
+                                video.muted = true;
+                                video.play();
+                            });
+                        } else {
+                            video.pause();
+                            video.currentTime = 0;
+                        }
+                    });
+                }, observerOptions);
+
+                document.querySelectorAll('[id^="reel-"]').forEach(el => observer.observe(el));
+            }
+
+            togglePlay(id) {
+                const video = document.getElementById(`video-${id}`);
+                const overlay = document.getElementById(`playPauseOverlay-${id}`);
+                if (!video) return;
+
+                if (video.paused) {
+                    video.play();
+                    overlay.innerHTML = `<div class="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm text-white flex items-center justify-center text-2xl shadow-2xl"><i class="fa-solid fa-play"></i></div>`;
+                } else {
+                    video.pause();
+                    overlay.innerHTML = `<div class="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm text-white flex items-center justify-center text-2xl shadow-2xl"><i class="fa-solid fa-pause"></i></div>`;
+                }
+
+                overlay.classList.remove('opacity-0');
+                setTimeout(() => {
+                    overlay.classList.add('opacity-0');
+                }, 500);
+            }
+
+            filterFavorites() {
+                this.showToast('Mostrando tus favoritos guardados');
+            }
+            filterFeed() {
+                // Reset scroll to top
+                document.getElementById('reelsContainer').scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        // Initialize App Global Instance
+        const appState = new AIDramaApp();
+    </script>
+</body>
+</html>
