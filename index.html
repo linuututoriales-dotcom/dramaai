@@ -185,7 +185,7 @@
 
         <!-- Video Container -->
         <div class="relative w-full h-full flex items-center justify-center bg-black">
-            <video id="streamVideo" class="h-full w-auto aspect-[9/16] object-cover max-h-screen cursor-pointer shadow-2xl" loop playsinline webkit-playsinline onclick="appController.togglePlayPause()"></video>
+            <video id="streamVideo" class="h-full w-auto aspect-[9/16] object-cover max-h-screen cursor-pointer shadow-2xl" playsinline webkit-playsinline onclick="appController.togglePlayPause()"></video>
             <div id="playerPlayOverlay" class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 transition-opacity">
                 <div class="w-20 h-20 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center text-2xl shadow-xl">
                     <i class="fa-solid fa-play"></i>
@@ -194,7 +194,8 @@
         </div>
 
         <!-- Bottom Video Details Overlay -->
-        <div class="absolute bottom-0 inset-x-0 z-30 p-6 sm:p-8 bg-gradient-to-t from-black via-black/80 to-transparent max-w-2xl mx-auto space-y-2">
+        <div class="absolute bottom-0 inset-x-0 z-30 p-6 sm:p-8 bg-gradient-to-t from-black via-black/80 to-transparent max-w-2xl mx-auto space-y-3">
+            <div id="playerPartsRow" class="hidden flex items-center gap-2 overflow-x-auto no-scrollbar pb-1"></div>
             <div class="flex items-center space-x-2">
                 <span id="playerCategoryBadge" class="px-2.5 py-0.5 bg-netflix-red text-white font-bold text-[10px] rounded uppercase">Sci-Fi</span>
                 <span class="text-[10px] text-emerald-400 font-semibold"><i class="fa-solid fa-circle text-[6px]"></i> Sincronizado Firebase</span>
@@ -287,12 +288,14 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[11px] font-medium text-zinc-400 mb-1">Enlace de Video (MP4 9:16)</label>
-                            <input type="url" id="newVideoUrl" required placeholder="https://assets.mixkit.co/..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red">
+                            <label class="block text-[11px] font-medium text-zinc-400 mb-1">Video (una parte por línea, en orden)</label>
+                            <textarea id="newVideoUrl" rows="3" required placeholder="/videos/mi-drama-parte1.mp4&#10;/videos/mi-drama-parte2.mp4&#10;/videos/mi-drama-parte3.mp4" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red resize-y"></textarea>
+                            <p class="text-[10px] text-zinc-500 mt-1">Si es un solo video, deja una sola línea. Si lo divides en partes, pon una ruta por línea en el orden en que deben verse.</p>
                         </div>
                         <div>
-                            <label class="block text-[11px] font-medium text-zinc-400 mb-1">Enlace de Portada (Vertical)</label>
-                            <input type="url" id="newCoverUrl" required placeholder="https://images.unsplash.com/..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red">
+                            <label class="block text-[11px] font-medium text-zinc-400 mb-1">Portada (Vertical)</label>
+                            <input type="text" id="newCoverUrl" required placeholder="/covers/mi-drama.jpg  o  https://..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-netflix-red">
+                            <p class="text-[10px] text-zinc-500 mt-1">Ruta del repo (ej. <code>/covers/archivo.jpg</code>) o una URL externa completa.</p>
                         </div>
                     </div>
 
@@ -386,10 +389,13 @@
                 this.favorites = JSON.parse(localStorage.getItem('netflix_ai_favs') || '[]');
                 this.currentCategory = 'all';
                 this.activeDramaId = null;
+                this.activePartIndex = 0;
                 this.currentUser = null;
 
                 this.initAuthListener();
                 this.fetchDramas();
+
+                document.getElementById('streamVideo').addEventListener('ended', () => this.handleVideoEnded());
             }
 
             initAuthListener() {
@@ -501,16 +507,24 @@
                     return;
                 }
 
-                grid.innerHTML = results.map(d => `
+                grid.innerHTML = results.map(d => this.cardHTML(d)).join('');
+            }
+
+            cardHTML(d) {
+                const partsCount = this.getParts(d).length;
+                return `
                     <div onclick="appController.openPlayer('${d.id}')" class="relative rounded-2xl overflow-hidden aspect-[9/16] bg-zinc-900 border border-zinc-800/80 cursor-pointer group shadow-xl transition transform hover:-translate-y-1.5 duration-300">
                         <img src="${d.coverUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700" onerror="this.src='https://placehold.co/300x533/18181b/71717a?text=AI+Drama'">
-                        <div class="absolute top-3 right-3 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded-md text-[9px] font-bold text-white tracking-widest">9:16</div>
+                        <div class="absolute top-3 right-3 flex flex-col items-end gap-1">
+                            <span class="bg-black/70 backdrop-blur-md px-2 py-0.5 rounded-md text-[9px] font-bold text-white tracking-widest">9:16</span>
+                            ${partsCount > 1 ? `<span class="bg-netflix-red/90 backdrop-blur-md px-2 py-0.5 rounded-md text-[9px] font-bold text-white">${partsCount} Partes</span>` : ''}
+                        </div>
                         <div class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black via-black/80 to-transparent space-y-0.5">
                             <h4 class="text-xs sm:text-sm font-bold text-white truncate">${d.title}</h4>
                             <span class="text-[10px] text-zinc-400 font-medium">${d.category}</span>
                         </div>
                     </div>
-                `).join('');
+                `;
             }
 
             renderAll() {
@@ -549,16 +563,7 @@
                     return;
                 }
 
-                grid.innerHTML = filtered.map(d => `
-                    <div onclick="appController.openPlayer('${d.id}')" class="relative rounded-2xl overflow-hidden aspect-[9/16] bg-zinc-900 border border-zinc-800/80 cursor-pointer group shadow-xl transition transform hover:-translate-y-1.5 duration-300">
-                        <img src="${d.coverUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700" onerror="this.src='https://placehold.co/300x533/18181b/71717a?text=AI+Drama'">
-                        <div class="absolute top-3 right-3 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded-md text-[9px] font-bold text-white tracking-widest">9:16</div>
-                        <div class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black via-black/80 to-transparent space-y-0.5">
-                            <h4 class="text-xs sm:text-sm font-bold text-white truncate">${d.title}</h4>
-                            <span class="text-[10px] text-zinc-400 font-medium">${d.category}</span>
-                        </div>
-                    </div>
-                `).join('');
+                grid.innerHTML = filtered.map(d => this.cardHTML(d)).join('');
             }
 
             renderFavorites() {
@@ -570,36 +575,81 @@
                     return;
                 }
 
-                grid.innerHTML = favDramas.map(d => `
-                    <div onclick="appController.openPlayer('${d.id}')" class="relative rounded-2xl overflow-hidden aspect-[9/16] bg-zinc-900 border border-zinc-800/80 cursor-pointer group shadow-xl transition transform hover:-translate-y-1.5 duration-300">
-                        <img src="${d.coverUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700" onerror="this.src='https://placehold.co/300x533/18181b/71717a?text=AI+Drama'">
-                        <div class="absolute top-3 right-3 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded-md text-[9px] font-bold text-white tracking-widest">9:16</div>
-                        <div class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black via-black/80 to-transparent space-y-0.5">
-                            <h4 class="text-xs sm:text-sm font-bold text-white truncate">${d.title}</h4>
-                            <span class="text-[10px] text-zinc-400 font-medium">${d.category}</span>
-                        </div>
-                    </div>
-                `).join('');
+                grid.innerHTML = favDramas.map(d => this.cardHTML(d)).join('');
+            }
+
+            getParts(drama) {
+                if (Array.isArray(drama.parts) && drama.parts.length > 0) return drama.parts;
+                if (drama.videoUrl) return [{ label: 'Parte 1', url: drama.videoUrl }];
+                return [];
             }
 
             openPlayer(id) {
                 const drama = this.dramas.find(d => d.id === id);
                 if (!drama) return;
-                this.activeDramaId = id;
 
                 document.getElementById('playerModalTitle').innerText = drama.title;
                 document.getElementById('playerModalDesc').innerText = drama.description;
                 document.getElementById('playerCategoryBadge').innerText = drama.category;
 
+                document.getElementById('playerModal').classList.remove('translate-y-full');
+                this.playPart(id, 0);
+            }
+
+            playPart(dramaId, partIndex) {
+                const drama = this.dramas.find(d => d.id === dramaId);
+                if (!drama) return;
+                const parts = this.getParts(drama);
+                if (partIndex < 0 || partIndex >= parts.length) return;
+
+                this.activeDramaId = dramaId;
+                this.activePartIndex = partIndex;
+
                 const video = document.getElementById('streamVideo');
-                video.src = drama.videoUrl;
+                video.src = parts[partIndex].url;
+                video.currentTime = 0;
                 video.play().catch(() => {
                     video.muted = true;
                     video.play();
                 });
 
+                this.renderPartSelector(drama, partIndex);
                 this.updatePlayerFavIcon();
-                document.getElementById('playerModal').classList.remove('translate-y-full');
+
+                if (partIndex > 0) {
+                    this.showToast(`Reproduciendo ${parts[partIndex].label || ('Parte ' + (partIndex + 1))}`);
+                }
+            }
+
+            renderPartSelector(drama, activeIndex) {
+                const row = document.getElementById('playerPartsRow');
+                const parts = this.getParts(drama);
+                if (parts.length <= 1) {
+                    row.classList.add('hidden');
+                    row.innerHTML = '';
+                    return;
+                }
+                row.classList.remove('hidden');
+                row.innerHTML = parts.map((p, i) => `
+                    <button onclick="appController.playPart('${drama.id}', ${i})" class="px-3 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition ${i === activeIndex ? 'bg-white text-black' : 'bg-black/50 text-zinc-300 hover:bg-white/20'}">
+                        ${p.label || ('Parte ' + (i + 1))}
+                    </button>
+                `).join('');
+            }
+
+            handleVideoEnded() {
+                const drama = this.dramas.find(d => d.id === this.activeDramaId);
+                if (!drama) return;
+                const parts = this.getParts(drama);
+                const video = document.getElementById('streamVideo');
+
+                if (this.activePartIndex < parts.length - 1) {
+                    this.playPart(this.activeDramaId, this.activePartIndex + 1);
+                } else {
+                    // Última parte: se repite en bucle, igual que antes
+                    video.currentTime = 0;
+                    video.play();
+                }
             }
 
             closePlayer() {
@@ -608,6 +658,7 @@
                 video.pause();
                 video.currentTime = 0;
                 this.activeDramaId = null;
+                this.activePartIndex = 0;
             }
 
             togglePlayPause() {
@@ -721,8 +772,18 @@
                 const title = document.getElementById('newTitle').value.trim();
                 const category = document.getElementById('newCategory').value;
                 const description = document.getElementById('newDesc').value.trim();
-                const videoUrl = document.getElementById('newVideoUrl').value.trim();
-                const coverUrl = document.getElementById('newCoverUrl').value.trim();
+                const rawLines = document.getElementById('newVideoUrl').value.split('\n').map(l => l.trim()).filter(Boolean);
+                let coverUrl = document.getElementById('newCoverUrl').value.trim();
+
+                const isValidRef = (v) => v.startsWith('/') || v.startsWith('http://') || v.startsWith('https://');
+                const normalizeRef = (v) => (v.startsWith('http') || v.startsWith('/')) ? v : ('/' + v);
+
+                if (rawLines.length === 0 || !rawLines.every(isValidRef) || !isValidRef(coverUrl)) {
+                    this.showToast('Cada línea de video y la portada deben empezar con "/" o ser una URL http(s)://');
+                    return;
+                }
+                coverUrl = normalizeRef(coverUrl);
+                const parts = rawLines.map((url, i) => ({ label: `Parte ${i + 1}`, url: normalizeRef(url) }));
 
                 const btn = document.getElementById('saveDramaBtn');
                 btn.disabled = true;
@@ -730,7 +791,7 @@
 
                 try {
                     await addDoc(collection(db, "ai_dramas"), {
-                        title, category, description, videoUrl, coverUrl, createdAt: Date.now()
+                        title, category, description, parts, coverUrl, createdAt: Date.now()
                     });
                     document.getElementById('uploadDramaForm').reset();
                     this.showToast('¡Drama publicado correctamente!');
@@ -778,7 +839,7 @@
                             <img src="${d.coverUrl}" class="w-10 h-16 object-cover rounded-lg flex-shrink-0" onerror="this.src='https://placehold.co/100x150/18181b/71717a?text=AI'">
                             <div class="truncate">
                                 <h4 class="text-xs font-bold text-white truncate">${d.title}</h4>
-                                <span class="text-[10px] text-zinc-400">${d.category}</span>
+                                <span class="text-[10px] text-zinc-400">${d.category} · ${this.getParts(d).length} parte(s)</span>
                             </div>
                         </div>
                         <button onclick="appController.deleteDrama('${d.id}')" class="text-zinc-500 hover:text-red-400 p-2.5 transition">
