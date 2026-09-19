@@ -67,7 +67,7 @@
 
         <!-- VIEW: HOME / CATALOG -->
         <div id="homeView" class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 py-4">
-            
+
             <!-- HERO BANNER -->
             <div id="heroBanner" class="relative w-full h-[450px] sm:h-[500px] rounded-3xl overflow-hidden shadow-2xl bg-zinc-900 flex flex-col justify-end p-6 sm:p-10">
                 <div class="absolute inset-0 z-0">
@@ -82,7 +82,7 @@
                     </div>
                     <h1 id="heroTitle" class="text-3xl sm:text-5xl font-black text-white tracking-tight drop-shadow-lg">Cargando...</h1>
                     <p id="heroDesc" class="text-xs sm:text-sm text-zinc-300 line-clamp-3 leading-relaxed drop-shadow">Explora los dramas generados por inteligencia artificial en formato vertical 9:16.</p>
-                    
+
                     <div class="flex items-center space-x-3 pt-3">
                         <button id="heroPlayBtn" class="bg-white hover:bg-zinc-200 text-black font-bold px-6 py-3 rounded-xl text-xs sm:text-sm flex items-center space-x-2 transition shadow-lg active:scale-95">
                             <i class="fa-solid fa-play text-black"></i>
@@ -98,11 +98,11 @@
 
             <!-- CATEGORY CHIPS -->
             <div class="flex items-center space-x-3 overflow-x-auto no-scrollbar py-1">
-                <button onclick="appController.filterCategory('all')" class="category-chip px-4 py-2 rounded-full bg-white text-black text-xs font-bold whitespace-nowrap transition shadow">Todos</button>
-                <button onclick="appController.filterCategory('Sci-Fi')" class="category-chip px-4 py-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold whitespace-nowrap transition">Ciencia Ficción</button>
-                <button onclick="appController.filterCategory('Romance')" class="category-chip px-4 py-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold whitespace-nowrap transition">Romance IA</button>
-                <button onclick="appController.filterCategory('Suspense')" class="category-chip px-4 py-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold whitespace-nowrap transition">Suspense</button>
-                <button onclick="appController.filterCategory('Fantasía')" class="category-chip px-4 py-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold whitespace-nowrap transition">Fantasía</button>
+                <button onclick="appController.filterCategory('all')" data-cat="all" class="category-chip px-4 py-2 rounded-full bg-white text-black text-xs font-bold whitespace-nowrap transition shadow">Todos</button>
+                <button onclick="appController.filterCategory('Sci-Fi')" data-cat="Sci-Fi" class="category-chip px-4 py-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold whitespace-nowrap transition">Ciencia Ficción</button>
+                <button onclick="appController.filterCategory('Romance')" data-cat="Romance" class="category-chip px-4 py-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold whitespace-nowrap transition">Romance IA</button>
+                <button onclick="appController.filterCategory('Suspense')" data-cat="Suspense" class="category-chip px-4 py-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold whitespace-nowrap transition">Suspense</button>
+                <button onclick="appController.filterCategory('Fantasía')" data-cat="Fantasía" class="category-chip px-4 py-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold whitespace-nowrap transition">Fantasía</button>
             </div>
 
             <!-- CATALOG GRID (RESPONSIVE 2 TO 5 COLUMNS) -->
@@ -205,7 +205,7 @@
 
     <!-- ADMIN AUTH & DASHBOARD MODAL -->
     <div id="adminModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 transform translate-y-full transition-transform duration-300">
-        
+
         <!-- LOGIN VIEW (If not logged in) -->
         <div id="adminLoginView" class="w-full max-w-md bg-netflix-card border border-zinc-800 rounded-3xl p-8 shadow-2xl relative space-y-6">
             <button onclick="appController.closeAdminModal()" class="absolute right-5 top-5 text-zinc-400 hover:text-white transition">
@@ -418,9 +418,14 @@
                     snap.forEach(docSnap => {
                         this.dramas.push({ id: docSnap.id, ...docSnap.data() });
                     });
+                    // Orden estable: los más recientes primero (Firestore no garantiza orden por sí solo)
+                    this.dramas.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
                     this.renderAll();
                 } catch (error) {
                     console.error("Firestore error:", error);
+                    if (error.code === 'permission-denied') {
+                        this.showToast('Firestore rechazó la lectura: revisa las reglas de seguridad');
+                    }
                     this.dramas = defaultSeedDramas;
                     this.renderAll();
                 }
@@ -430,7 +435,7 @@
                 const toast = document.getElementById('toast');
                 document.getElementById('toastMsg').innerText = msg;
                 toast.classList.remove('opacity-0');
-                setTimeout(() => toast.classList.add('opacity-0'), 2500);
+                setTimeout(() => toast.classList.add('opacity-0'), 3000);
             }
 
             switchTab(tab) {
@@ -473,7 +478,7 @@
             filterCategory(cat) {
                 this.currentCategory = cat;
                 document.querySelectorAll('.category-chip').forEach(btn => {
-                    if (btn.innerText.includes(cat) || (cat === 'all' && btn.innerText === 'Todos')) {
+                    if (btn.dataset.cat === cat) {
                         btn.className = "category-chip px-4 py-2 rounded-full bg-white text-black text-xs font-bold whitespace-nowrap transition shadow";
                     } else {
                         btn.className = "category-chip px-4 py-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold whitespace-nowrap transition";
@@ -535,8 +540,8 @@
 
             renderCatalog() {
                 const grid = document.getElementById('catalogGrid');
-                const filtered = this.currentCategory === 'all' 
-                    ? this.dramas 
+                const filtered = this.currentCategory === 'all'
+                    ? this.dramas
                     : this.dramas.filter(d => d.category === this.currentCategory);
 
                 if (filtered.length === 0) {
@@ -642,7 +647,7 @@
             openAdminModal() {
                 const modal = document.getElementById('adminModal');
                 modal.classList.remove('translate-y-full');
-                
+
                 const loginView = document.getElementById('adminLoginView');
                 const dashView = document.getElementById('adminDashboardView');
 
@@ -678,7 +683,19 @@
                     this.openAdminModal();
                 } catch (error) {
                     console.error(error);
-                    this.showToast('Error: Credenciales incorrectas');
+                    let msg = 'Error: Credenciales incorrectas';
+                    if (error.code === 'auth/unauthorized-domain') {
+                        msg = 'Este dominio no está autorizado en Firebase. Agrégalo en Authentication > Settings > Authorized domains.';
+                    } else if (error.code === 'auth/invalid-email') {
+                        msg = 'El correo no tiene un formato válido.';
+                    } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                        msg = 'Credenciales incorrectas.';
+                    } else if (error.code === 'auth/too-many-requests') {
+                        msg = 'Demasiados intentos fallidos. Espera unos minutos.';
+                    } else if (error.code === 'auth/operation-not-allowed') {
+                        msg = 'El método Email/Contraseña no está habilitado en Firebase Authentication.';
+                    }
+                    this.showToast(msg);
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = `Iniciar Sesión`;
@@ -695,6 +712,12 @@
 
             async handleSaveDrama(e) {
                 e.preventDefault();
+
+                if (!this.currentUser) {
+                    this.showToast('Debes iniciar sesión para publicar.');
+                    return;
+                }
+
                 const title = document.getElementById('newTitle').value.trim();
                 const category = document.getElementById('newCategory').value;
                 const description = document.getElementById('newDesc').value.trim();
@@ -711,10 +734,15 @@
                     });
                     document.getElementById('uploadDramaForm').reset();
                     this.showToast('¡Drama publicado correctamente!');
+                    await this.fetchDramas();
                     this.renderAdminManageList();
                 } catch (err) {
                     console.error(err);
-                    this.showToast('Error al guardar en Firebase');
+                    let msg = 'Error al guardar en Firebase';
+                    if (err.code === 'permission-denied') {
+                        msg = 'Permiso denegado por las reglas de Firestore.';
+                    }
+                    this.showToast(msg);
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = `Guardar en Firebase Firestore`;
@@ -726,10 +754,15 @@
                 try {
                     await deleteDoc(doc(db, "ai_dramas", id));
                     this.showToast('Drama eliminado');
+                    await this.fetchDramas();
                     this.renderAdminManageList();
                 } catch (err) {
                     console.error(err);
-                    this.showToast('Error al eliminar');
+                    let msg = 'Error al eliminar';
+                    if (err.code === 'permission-denied') {
+                        msg = 'Permiso denegado por las reglas de Firestore.';
+                    }
+                    this.showToast(msg);
                 }
             }
 
@@ -757,6 +790,7 @@
         }
 
         const appController = new NetflixHubApp();
+        window.appController = appController;
     </script>
 </body>
 </html>
